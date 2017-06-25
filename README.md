@@ -19,7 +19,7 @@ DEFINE PLACEHOLDER CHAPTER-NODE
 END DEFINE
 ```
 
-To generate a chapter node entry in the buffer, the user could type "chap<C-x / e>" (note: this is a key sequence mandated by the Emacs guide for new commands, I have the command bound to F3 for single key-press) and "point" would be (automatically) positioned within the "placeholder" {node-text}. The result would be:
+To generate a chapter node entry in the buffer, the user could type "chapC-x / e" (note: this is a key sequence mandated by the Emacs guide for new commands, I have the command bound to F3 for single key-press) and "point" would be (automatically) positioned within the "placeholder" {node-text}. The result would be:
 
 ```
 @node {node-text},,

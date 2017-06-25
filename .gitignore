@@ -1,0 +1,9 @@
+*.aux
+*.cp
+*.cps
+*.dvi
+*.fn
+*.fns
+*.log
+*.tmp
+*.toc

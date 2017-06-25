@@ -1,0 +1,1429 @@
+\input texinfo    @c -*-texinfo-*-
+@c %**start of header
+@setfilename else.info
+@settitle ELSE Users Manual
+@iftex
+@afourpaper
+@end iftex
+@c %**end of header
+
+@c Some global values used in the info file
+@set doc_version 2.0
+@set ELSE_version 2
+@set issue_date 31st January, 2017
+
+@set expand @kbd{C-c / e}
+@set next @kbd{C-c / n}
+@set prev @kbd{C-c / p}
+@set kill @kbd{C-c / k}
+@set numeric-n @kbd{C-u n}
+@set numeric @kbd{C-u}
+@set full_expand @code{else-expand} (@value{expand})
+@set full_next @code{else-next} (@value{next})
+@set full_prev @code{else-previous} (@value{prev})
+@set full_kill @code{else-kill} (@value{kill})
+@set full_compile @code{else-compile-buffer}
+@set cmd_expand @code{else-expand}
+@set cmd_kill @code{else-kill}
+@set cmd_next @code{else-next}
+@set cmd_prev @code{else-previous}
+@c @setchapternewpage odd
+
+@copying
+
+This manual is for @cite{Emacs Language Sensitive Editor (ELSE)} (version
+@value{ELSE_version}, @value{issue_date}), a minor mode written for the GNU
+Emacs editor.
+
+Copyright @copyright{} 1999 - 2017 Peter Milliken
+
+Permission is granted to make and distribute verbatim copies of this manual
+provided the copyright notice and this permission notice are preserved on all
+copies.
+
+@ignore
+Permission is granted to process this file through TeX and print the results,
+provided the printed document carries a copying permission notice identical to
+this one except for the removal of this paragraph (this paragraph not being
+relevant to the printed manual).
+
+@end ignore
+
+@quotation
+Permission is granted to copy and distribute modified versions of this manual
+under the conditions for verbatim copying, provided also that the sections
+entitled ``Copying'' and ``GNU General Public License'' are included exactly as
+in the original, and provided that the entire resulting derived work is
+distributed under the terms of a permission notice identical to this one.
+
+Permission is granted to copy and distribute translations of this manual into
+another language, under the above conditions for modified versions, except that
+this permission notice may be stated in a translation approved by the Free
+Software Foundation.
+@end quotation
+@end copying
+
+@ifinfo
+
+@dircategory Editors
+@direntry
+* ELSE: (else).      Emacs Language Sensitive Editor mode.
+@end direntry
+
+@end ifinfo
+
+@titlepage
+@title Emacs Language Sensitive Editor (ELSE)
+@subtitle A minor mode for Emacs.
+@subtitle ELSE Version @value{ELSE_version}.
+@subtitle Manual edition @value{doc_version}, @value{issue_date}.
+
+@author Peter Milliken
+@page
+@vskip 0pt plus 1filll
+@insertcopying
+@sp 2
+@c Edition @value{doc_version} @*
+@c Revised for ELSE Version @value{ELSE_version},@*
+@c @value{issue_date}.@*
+
+@c @sp 2
+@c
+@c Permission is granted to make and distribute verbatim copies of this manual
+@c provided the copyright notice and this permission notice are preserved on all
+@c copies.
+@c
+@c @ignore
+@c Permission is granted to process this file through TeX and print the results,
+@c provided the printed document carries a copying permission notice identical to
+@c this one except for the removal of this paragraph (this paragraph not being
+@c relevant to the printed manual).
+@c
+@c @end ignore
+@c Permission is granted to copy and distribute modified versions of this manual
+@c under the conditions for verbatim copying, provided also that the sections
+@c entitled ``Copying'' and ``GNU General Public License'' are included exactly as
+@c in the original, and provided that the entire resulting derived work is
+@c distributed under the terms of a permission notice identical to this one.
+@c
+@c Permission is granted to copy and distribute translations of this manual into
+@c another language, under the above conditions for modified versions, except that
+@c this permission notice may be stated in a translation approved by the Free
+@c Software Foundation.
+
+@end titlepage
+@shortcontents
+@contents
+
+
+@node Top, Overview, (dir), (dir)
+
+@ifinfo
+This Info file contains edition @value{doc_version} of the ELSE Users Manual,
+corresponding to Version @value{ELSE_version} of the Elisp file else-mode.el.
+@end ifinfo
+
+@iftex
+@ignore
+@unnumbered Preface (Version 2)
+This document describes version 2 of ELSE.  Version 2 does not, in the main,
+introduce any new features over version 1. ELSE Version 1 was written back in
+the dark ages of Emacs 19.X. Version 2 is a complete re-write of ELSE from the
+ground up in an attempt to make use of features and packages of Emacs Lisp that
+have been introduced since then.
+
+From the user perspective, the only noticeable difference between ELSE v2 and
+ELSE v1 is that the boundary between ``tokens'' and ``placeholders'' has become
+even more blurred@footnote{In version 1, tokens were equivalent to, or could be
+thought of, as an abbreviation for a placeholder, although some token
+definitions were standalone definitions in their own right.}. In version 2
+everything (tokens and placeholders) can be ``expanded'' from an initial
+abbreviation e.g. every language template set defines a @dfn{statement}
+placeholder, ELSE v2 allows the user to ``expand'' any textual string that could
+be considered an abbreviation for ``statement'' into the @dfn{statement}
+placeholder@footnote{Completion of the abbreviated string is attempted using the
+defined list of token/placeholder names for the language, if more than one
+possible match exists then the matches are presented as a menu selection to the
+user.}.
+
+From the perspective of a template developer, I used the re-write as an
+opportunity to separate the code that ``reads'' the language template files from
+the rest of the code@footnote{@dfn{else-template.el} contains the code that
+reads the template files and @dfn{else-structs.el} contains the data structures
+that needs to be ``populated''.}. One or two users in the past
+requested/suggested that the template syntax would (in their opinion) be better
+written in a more (E)lisp style. Whilst there is no way to divorce a template
+developer from having to understand the syntax of the template language I didn't
+consider making it more (E)lisp like an advantage over what was already in use
+and I certainly didn't want to expend any further effort creating a new syntax.
+
+@unnumbered Preface (Version 1)
+This manual documents the use and creation/customisation of language templates
+for ELSE. There are two levels of reader assumed by this document; a user and a
+language template developer/maintainer. The two are not mutually exclusive.
+
+This manual is a mixture of user manual and reference manual. All readers are
+recommended to read the Tutorial at the end of the manual (@xref{Tutorial}). In
+addition, complete beginners to ELSE are recommended to read the first six
+chapters (Overview --- Using ELSE) and then the chapter on Customising Variables
+(but only after they have become familiar with ELSE). The rest of the manual is
+for the more adventurous who wish to either customise existing ELSE templates or
+create their own templates for any language that ELSE does not currently
+support (please make them available to the wider community if you do).
+
+If you dislike reading documentation then just focus on the sections for
+installing ELSE (@xref{Installation Instructions},) and the Tutorial
+@ref{Tutorial}. Once you have satisfied your initial curiosity about ELSE then
+you can come back and read the other portions of the manual. ELSE is an
+extremely powerful, but simple concept, so if you decide to persevere with using
+ELSE then you will sooner or later find yourself reading the entire manual. Much
+of ELSE's power comes from the ability for the user to customise the language
+templates for his/her own programming style.
+
+@end ignore
+
+@end iftex
+
+@menu
+* Overview::
+* Installation Instructions::
+* Default Keybindings::
+* Using ELSE::
+* Command Summary::
+* Template System::
+* Custom Variables::
+* Concept Index::
+
+@detailmenu
+ --- The Detailed Node Listing ---
+
+Overview
+
+* What makes ELSE different from other templating systems?::
+* Reporting Bugs::
+* History::
+* Definitions::
+* Typographical Conventions::
+
+Default Keybindings
+
+* Popup Menu Mappings::
+
+Using ELSE
+
+* Invoking ELSE::
+* Navigating::
+* Placeholder Expansion::
+* Deleting Placeholders::
+
+Template System
+
+* Template File Naming::
+* Template Loading::
+* Project Wide Templates and Local Customisations::
+* Fast Load Files::
+* Template File Layout::
+* Customisation::
+
+Template File Layout
+
+* Syntactic Conventions::
+* Language Definition::
+* Placeholders::
+
+Placeholders
+
+* Menu Placeholders::
+* NonTerminal Placeholders::
+* Terminal Placeholders::
+
+@end detailmenu
+@end menu
+
+@node Overview, Installation Instructions, Top, Top
+@chapter Overview
+ELSE (Emacs Language Sensitive Editor) is a system for template generation
+(typically focused on programming but can be used for any editing task that
+involves repetitive blocks of text) aimed at reducing the amount of user typing
+and to operate seamlessly with a minimum of interference to the user.
+
+ELSE is implemented as a minor mode and can work with any major mode. As ELSE is
+invoked the first time for each major mode, it will load a template file
+specific to that mode, subsequent invocations for buffers using that major mode
+will access the same set of template definitions i.e. there is one template file
+for each major mode for which ELSE is invoked. There is no limit to the number
+of language templates that can active during an edit session and ELSE seemlessly
+switches templates as the user switches buffers.
+
+The fundamental components/building block of ELSE is the ``placeholder''. A
+placeholder is a piece of text surrounded by either curly braces (@samp{@{@}})
+or brackets (@samp{[]}). Placeholders can be navigated to via the next/previous
+commands (@value{cmd_next}/@value{cmd_prev}).
+
+Expanding a placeholder (user places point within the @samp{@{@}} or @samp{[]}'s
+and executes the command @value{cmd_expand}) will result in one of three
+possible responses:
+
+@itemize
+@item
+A menu (list) of possible completions;
+@item
+A block of text is inserted and replaces the placeholder text; or
+@item
+A prompt to the user is presented indicating possible text entries to replace
+the placeholder.
+@end itemize
+
+An abbreviation for a placeholder i.e. text not surrounded by braces or
+brackets, can also be expanded with the same results as if point was situated
+within the ``full'' placeholder e.g. a common placeholder in most language
+template files is the @code{statement} placeholder, so expanding the
+abbreviation ``sta'' would be the same as expanding @code{[statement]}. If the
+abbreviation is ambiguous i.e. there is more than one placeholder that starts
+with ``sta'', then ELSE will generate a menu popup showing the list of possible
+completions.
+
+@menu
+* What makes ELSE different from other templating systems?::
+* Reporting Bugs::
+* History::
+* Definitions::
+* Typographical Conventions::
+@end menu
+
+@node What makes ELSE different from other templating systems?, Reporting Bugs, Overview, Overview
+@section What makes ELSE different from other templating systems?
+Probably the biggest, single advantage that ELSE offers over other available
+templating systems is the way it uses and implements placeholders. With other
+systems, such as skeleton and yasnippet, the placeholders (the points where the
+user expects to fill in the syntactic construct generated by the template
+system) are non-visible markers in the buffer to which the user can
+navigate. However, these markers are not ``persistent'' i.e. if the user
+navigates away from the entry point (and who doesn't switch all over the place,
+referencing other pieces of code as they write new code?) then on returning the
+markers may nolonger be available i.e. they are implemented as invisible
+entities that may be silently deleted as a result of edit actions by the user
+elsewhere in the edit session.
+
+With ELSE, placeholders are visible pieces of text in the buffer and are treated
+no differently (unless the user attempts to type within them, in which case they
+are seamlessly replaced with the typed text) than any other text. They 'persist'
+until the user actively deletes them.
+
+Another difference is that other template systems, in an attempt to aid the
+user, sometimes resort to a question/answer session, requesting the user provide
+information through text prompts before the system fills in the construct being
+generated - hardly a ``natural'', seamless editing experience! The only time
+ELSE requires ``user input'' is when the placeholder being expanded can lead to
+multiple choices, in which case ELSE offers a menu of possible completions and
+the user selects (or cancels) the selection.
+
+@node Reporting Bugs, History, What makes ELSE different from other templating systems?, Overview
+@section Reporting Bugs
+I welcome comments, suggestions and bug reports for any aspect of ELSE. Please
+email them to @email{peter.milliken@@gmail.com}.
+
+For enhancements, please include:
+
+@itemize
+@item
+An example of the suggested behaviour.
+@item
+A scenario of when and how it might be used.
+@end itemize
+
+For bug reports, please include enough information to reproduce the
+problem. Generally, this could include:
+@itemize
+@item
+A copy of the templates used at the time of the bug.
+@item
+Precisely the environment/context in which the template was being used.
+@item
+A description of the problem and, if possible, any samples of the erroneous
+behaviour e.g. results before/after an expansion for instance.
+@item
+Version of Emacs under which the error occurred.
+@end itemize
+
+@node History, Definitions, Reporting Bugs, Overview
+@section History
+ELSE has it's roots in an editor I first met and used in 1985 -- DEC's LSEDIT
+(Language Sensitive Editor) -- which ran under the VMS operating system. At the
+time, I was working on a project writing code in Ada -- a very ``verbose''
+language and one that I was totally unfamiliar with. I was impressed that LSE
+provided templates for a number of different languages and was not at all
+``awkward'' or intrusive to use -- its interface was (IMO) intuitive and made
+writing code much easier, mainly by generating the syntactic ``sugar'' that was
+part of the language but also providing a system for guiding somebody unfamiliar
+with such a feature rich language through its tree-like system of templates.
+
+When I moved away from that project, I became increasingly frustrated at having
+to switch editors as I moved from project to project -- mainly using Unix
+(vi/Emacs) or VMS (Eve/LSE). I have always liked to ``enhance'' my editing
+experiences by writing/customising my editing environment (LSE was written using
+a text processing utility and language called TPU -- Text Processing Utility
+that DEC created to write editors). So I searched for an editor that was (a)
+customisable/extendable; (b) available on multiple OS platforms and (c) provided
+a consistent type of user interface with other text entry programs. At about
+that time, the computing industry was moving away from multiple terminals
+attached to a single (mainframe/mini) computer and towards a personal computer
+on each desk -- running DOS initially.
+
+I decided upon Emacs -- it was available under Unix and there was a DOS ``port''
+called MicroEmacs (mg). I could have just as easily gone with vi, but I found
+its user interface annoying since no other text entry system (Microsoft Word for
+instance) used it -- and continually switching between the two (sometimes
+multiple times per day!) meant I soon developed a certain amount of angst
+against vi and any of its ports.
+
+As I moved from project to project I had looked back often with longing at the
+functionality that LSE had provided and thus ELSE was born -- I finally had the
+right tools and environment to imitate LSE's functionality. I had kept a copy of
+some of the language templates (initially on magnetic tape, then transferred to
+floppy disk as technology changed) and a snippet of the LSE user manual
+explaining the template language itself. So I had a basis to work from. ELSE's
+first incantation was implemented entirely in C as an extension to mg. Then GNU
+Emacs became available for PCs and I completely rewrote the functionality in
+Elisp and thus ELSE (version 1) was born, it was 1997. In the spirit of
+contributing to the Emacs community, I ``threw it out there'', but wasn't
+totally surprised by the apparent lack of ``users''. Usage is almost impossible
+to gauge, but I only ever received a handful of emails from users, so I assumed
+that was about the limit of its take-up, plus my earlier experience with
+extending mg, which was mandated/used by a project team of 15 programmers,
+indicated that the majority of programmers just did not want or need something
+that generated language syntax at the touch of a single command@footnote{an
+attitude I have never understood -- I mean if a construct is generated
+automatically, surely there is less chance of syntactic errors at compile time
+due to typos!}.
+
+ELSE version 1 existed for many years in a very stable form with only very small
+and minor enhancement modifications.
+
+Enter the year 2017 and Emacs 25.1 and a fairly bored author. I had lost access
+to the original web-site that I used to host ELSE (I moved ISPs) and Emacs and
+supporting packages had overtaken some of the ``features'' used in ELSE - mainly
+the menu system that I had originally implemented was very crude and basic
+compared with packages such as @dfn{popup}. So I decided to do a complete
+re-write of ELSE -- plus ELSE version 1 was my first foray into the land of
+Elisp programming and I knew that the code was pretty ugly, so I hoped to do a
+better job (even though I hadn't gained any further Elisp programming
+experience) since I was not under the pressures of attempting to produce a tool
+that helped with productivity while still remaining productive on an active
+project!
+
+At the user interface level, ELSE version 2 functionally duplicates ELSE version
+1, with some little used commands/features removed@footnote{they can be easily
+re-instated if there is any demand} because (a) I ended up using them
+infrequently or (b) I never received any feedback by the originating requester
+of the feature to tell me they had ever used it!@footnote{Version 1 allowed
+linking of Elisp functions into various stages of the template expansion process
+-- something that I never saw the need for personally, however I did implement
+the request}
+
+ELSE version 2 extends the (ELSE version 1) user interface by treating any
+string @footnote{ELSE version 1 had an entity called a @i{token} which acted
+like an abbreviation for placeholders} as a potential abbreviation for a
+placeholder e.g. @i{if} @expansion{} results in the expansion of the
+@i{if_statement} placeholder. If there are multiple @i{completions} of an
+abbreviation (from the list of placeholder names) then the user is presented
+with a menu showing the available completions.
+
+@node Definitions, Typographical Conventions, History, Overview
+@section Definitions
+
+The following terminology is used in this manual:
+
+@cindex placeholder
+@cindex expand, expanded, expanding, expansion
+
+@enumerate
+@item
+@samp{placeholder} --- Term used to denote a textual string that is
+recognisable or @dfn{defined} in the currently selected `language'
+mode. The string is enclosed by either @samp{[]}'s or @samp{@{@}}'s
+(@pxref{Typographical Conventions}).
+@item
+@samp{expand}, @samp{expanded}, @samp{expanding} or @samp{expansion} --- Denotes
+the execution of the command @value{cmd_expand} when point is either within a
+placeholder or directly after an abbreviation.
+@end enumerate
+
+@node Typographical Conventions,  , Definitions, Overview
+@comment  node-name,  next,  previous,  up
+@section Typographical Conventions
+
+This manual uses the following typographical conventions:
+
+@enumerate
+@item
+@expansion{} --- denotes the @dfn{expansion} operation applied to a placeholder
+e.g. @dfn{expansion} of the placeholder @samp{@{import_stmt@}} looks like:
+@example
+@{import_stmt@} @expansion{} @code{import @{module@} [as @{name@}]}
+@end example
+whereas @dfn{expansion} of the textual abbreviation @i{imp} looks like:
+@example
+imp @expansion{} @code{import @{module@} [as @{name@}]}
+@end example
+@end enumerate
+
+@node Installation Instructions, Default Keybindings, Overview, Top
+@comment Installation instructions.
+@chapter Installation Instructions
+
+To install ELSE, make sure the Emacs Lisp files are in your load path. If you
+downloaded ELSE from the package archives then this will have been done for
+you. Place the following command into your .emacs file:
+@example
+(require 'else-mode)
+@end example
+@quotation Note
+This version of ELSE is specifically written to use features of Emacs 25 and may
+not work with any previous version. If you need a version that works with Emacs
+prior to 25 (right back to 19), just drop me a line.
+@end quotation
+
+@ignore
+If using the @i{desktop} package, it is recommended that the function
+'else-activate-mode be added to the @i{'desktop-minor-mode-table} variable
+(easiest way is to @i{Browse} the Customization Groups and select
+@i{Environment} @expansion{} @i{Frames} @expansion{} @i{Desktop} @expansion{}
+@i{Desktop Minor Mode Table} and add @i{'else-activate-mode} against
+@i{else-mode}
+@end ignore
+
+It is recommended, but not necessary, that you install the ELSE info
+documentation. ELSE documentation consists of a TexInfo file (else.texi), an
+info file (else.info) and a PDF file (else.pdf). Copy the info file (else.info)
+into the Emacs Info directory and add the following line to the `dir' file that
+can be found in the Emacs info directory:
+
+@example
+* ELSE: (else.info).    Emacs Language Sensitive Editor.
+@end example
+
+ELSE comes with a number of template definition files. Place the desired
+template definition files anywhere in your load path (if ELSE was downloaded
+from the package archives then the template files will be in the same place as
+the .el files --- or you can move them into a more convenient spot, just make
+sure they are in the load path@footnote{Be careful, because ELSE searches the
+load path for the template files, to avoid confusion, make sure you have one
+copy only of the template files}).
+
+A ``nice to have'' in your .emacs file is to have @code{else-mode} turned on
+automatically for each major mode that you use. An example of how to turn on
+ELSE for c-mode (C source files) is:
+
+@example
+(add-hook 'c-mode-hook
+          (lambda ()
+            ;; using lambda here so you can add further interesting minor
+            ;; mode definitions easily.
+            (else-mode)))
+@end example
+
+Refer to the Emacs manual for further information on major mode hooks, when and
+how they are run to achieve customisation of an edit environment.
+
+@node Default Keybindings, Using ELSE, Installation Instructions, Top
+@chapter Default Keybindings
+
+Following the recommendations of the Elisp manual regarding minor modes,
+ELSE provides a minor-mode map i.e. a map that is active only when the
+minor mode is active, that binds the four main commands of ELSE as
+follows:
+@enumerate
+@item
+else-expand - @value{expand}
+@item
+else-next - @value{next}
+@item
+else-previous - @value{prev}
+@item
+else-kill - @value{kill}
+@end enumerate
+
+Note that these bindings are purely provided to conform with the conventions as
+specified in the Emacs Lisp manual. My personal preference is to bind the main
+four commands to @kbd{F3 - F6}.
+
+@menu
+* Popup Menu Mappings::
+@end menu
+
+@node Popup Menu Mappings,  , Default Keybindings, Default Keybindings
+@section Popup Menu Mappings
+ELSE uses the popup package to present menu choices to the user. The key
+bindings for the menu map is:
+
+@itemize
+@item
+@kbd{q}/@kbd{Q} -- quit from the selection process.
+@item
+@kbd{s}/@kbd{S} -- select the menu item.
+@end itemize
+
+@quotation Note
+No matter what key sequence you bind to @value{cmd_expand}, as part of the
+activation sequence, ELSE will also bind this key sequence to the ``select''
+operation in the menu map-- this is a ``convenience'' inserted so that the user
+can use the same key to select a menu item as started the expansion process
+i.e. in the expectation of no further finger movement.
+@end quotation
+
+@node Using ELSE, Command Summary, Default Keybindings, Top
+@chapter Using ELSE
+
+@menu
+* Invoking ELSE::
+* Navigating::
+* Placeholder Expansion::
+* Deleting Placeholders::
+@end menu
+
+@node Invoking ELSE, Navigating, Using ELSE, Using ELSE
+@section Invoking ELSE
+
+To turn ELSE on/off in a buffer use the command @kbd{M-x else-mode}.
+
+If ELSE is activated in a buffer that is empty then it will automatically insert
+the @i{initial_string} placeholder defined in the template language
+definition(@pxref{Language Definition}). This is usually the
+placeholder @code{@{compilation_unit@}}. Point will automatically be positioned
+in the placeholder.
+
+@node Navigating, Placeholder Expansion, Invoking ELSE, Using ELSE
+@section Navigating
+The user can quickly move between placeholders using the commands
+@value{full_next} and @value{full_prev}. After the command, ELSE will center point
+in the placeholder i.e. ready for an @command{expand}.
+
+Both commands accept an optional numeric argument i.e. @value{numeric-n}
+@value{next} will move point forward ``n'' placeholders. If there aren't ``n''
+placeholders after point, then ELSE will stop at the last placeholder
+encountered and signal the user there are no more placeholders.
+
+@node Placeholder Expansion, Deleting Placeholders, Navigating, Using ELSE
+@section Placeholder Expansion
+
+The expansion of a placeholder will produce one of the following responses:
+@itemize
+@item
+The user is presented with a menu directing the user deeper into the language
+templates e.g. all current templates have a @code{@{statement@}} placeholder
+which contains a menu of possible selections i.e. @command{expanding} the
+placeholder @code{@{statement@}} (when editing a Python file) would result in
+the user being presented with the following menu options:
+@float Example, Ex:ex3
+@example
+       @code{"if_stmt"}
+       @code{"while_stmt"}
+       @code{"for_stmt"}
+       @code{.}
+       @code{.}
+       @code{"exec_stmt"}
+@end example
+@caption{Menu on expansion of ``statement'' placeholder}
+@end float
+@item
+The placeholder is replaced with the text construct defined for that placeholder
+e.g. @ref{Ex:ex1} shows the expansion of the ``if'' abbreviation @footnote{The same
+result would be achieved by selecting the @code{if_statement} in the menu of
+@ref{Ex:ex3}}.
+@float Example, Ex:ex1
+@example
+if @expansion{}
+      if (@{expression@}) @{
+         @{statement@}...
+      @}
+      [elsif_part]...
+      [else_part]
+@end example
+@caption{C/C++ If statement}
+@end float
+
+@item
+The user will see a hint with suggestions regarding the form of information they
+should type to replace the placeholder@footnote{Assuming the template language
+author put in tips on expected entries -- the original LSE templates had useful
+tips, but ELSE, on the main, doesn't} e.g. a trivial example would be
+@command{expanding} the @code{@{text@}} placeholder, the hint would be ``Enter
+some text.''
+@end itemize
+
+@node Deleting Placeholders,  , Placeholder Expansion, Using ELSE
+@section Deleting Placeholders
+To delete a placeholder, use the command @value{full_kill} when ``point'' is
+within a placeholder. If the placeholder is a mandatory placeholder then ELSE
+will signal that the placeholder cannot be deleted. To deliberately override
+this behavour, use the sequence @value{numeric} @value{kill}.
+
+@node Command Summary, Template System, Using ELSE, Top
+@chapter Command Summary
+
+The following user commands are provided by ELSE.
+
+@deffn {Interactive command} else-mode
+Toggles the minor mode for the current buffer. If the buffer is empty when
+@dfn{else-mode} is enabled then it inserts the @dfn{initial_string}@footnote{The
+@dfn{initial_string} is defined as part of the language definition statement}.
+@end deffn
+
+@deffn {Interactive command} else-expand
+Expand the enclosing @dfn{placeholder}/preceding @dfn{abbreviation}
+(@pxref{Definitions}) according to the rules for the definition of that
+placeholder@footnote{Note that if the placeholder/abbreviation is not defined in
+the language template set then the command will not recognise the
+placeholder/abbreviation and the command will do nothing.}
+@end deffn
+
+@deffn {Interactive command} else-next [n]
+Moves the cursor to the next valid placeholder in the current buffer. The
+optional argument @var{n} moves ``n'' placeholders (or to the last placeholder in the
+buffer if ``n'' cannot be satisfied).
+@end deffn
+
+@deffn {Interactive command} else-previous [n]
+Moves the cursor to the previous valid placeholder in the current buffer. The
+optional argument @var{n} moves ``n'' placeholders (or to the earliest
+placeholder in the buffer if ``n'' cannot be satisfied).
+@end deffn
+
+@deffn {Interactive command} else-kill [n]
+Kills or deletes the placeholder in which the cursor is currently
+positioned.
+@quotation Note
+ a numeric argument (@kbd{C-u}) will force a kill even when the placeholder is
+mandatory.
+@end quotation
+@end deffn
+
+@deffn {Interactive command} else-compile-buffer [n]
+Command to ``compile'' the language definitions from `point' to the end of the
+buffer. When supplied with a numeric argument (@kbd{C-u}) will compile
+definitions from the beginning of the current buffer.
+@end deffn
+
+@deffn {Interactive command} else-extract-all language
+Prompts the user for the language name and extracts the language definition and
+all of the placeholders into the current buffer at `point'.
+@quotation Note
+This command works from any buffer.
+@end quotation
+@end deffn
+
+@deffn {Interactive command} else-extract-placeholder placeholder
+Prompts the user for a placeholder name defined in the current language template
+set and then extracts the placeholder definition into the buffer at point.
+@quotation Note
+Placeholder names are stored internally in upper-case. This function uses the
+Elisp @dfn{completing-read} function to provide name completion and that
+function is case sensitive, so the user must use upper-case when typing the
+placeholder name to extract.
+@end quotation
+@end deffn
+
+@deffn{Interactive Command} else-show-placeholder-names
+Display names of all of the Placeholders in the current language template set,
+sorted in alphabetical order, including the line number and file name where the
+definition occurs.
+@end deffn
+
+@node Template System, Custom Variables, Command Summary, Top
+@chapter Template System
+
+@menu
+* Template File Naming::
+* Template Loading::
+* Project Wide Templates and Local Customisations::
+* Fast Load Files::
+* Template File Layout::
+* Customisation::
+@end menu
+
+@node Template File Naming, Template Loading, Template System, Template System
+@section Template File Naming
+@cindex Template File Naming
+Language template files should have a ``.lse'' extension and should have the
+same name as the (language) major mode i.e. Emacs-Lisp @result{}
+Emacs-Lisp.lse. Where such a direct correspondence cannot be used i.e. the C/C++
+major mode is named ``C/l'' and ``C++/l'' respectively, ELSE maintains a
+``translation'' table of major mode name to file (prefix) name (refer to
+customisation variable else-Alternate-Mode-Names) i.e. the default ELSE
+installation already defines an entry in this table for the C/C++ major modes
+e.g. C/l @expansion{} C and C++/l @expansion{} C++, which leads to C.lse and
+C++.lse respectively.
+
+ELSE generates and uses a ``fast load'' variant of the templates files that has
+a ``.esl'' extension @pxref{Fast Load Files}.
+
+@node Template Loading, Project Wide Templates and Local Customisations, Template File Naming, Template System
+@section Template Loading
+When ELSE is first invoked, it must ``locate'' the appropriate language template
+set to use. ELSE uses the following steps to determine which language template
+file to use/load for a given major mode:
+
+@enumerate
+@item
+Check the translation table to see if there is an entry for the current major
+mode name, if there is use that translation i.e. ``C/l'' @expansion{} ``C'',
+otherwise use the major mode name for the following steps;
+@item
+Check if there is a template set of that name already loaded in memory, if so,
+then set the template set for the buffer and exit the loading process;
+@item
+Search the Emacs load path for files using <name>.esl, <name>.lse and
+<name>-cust.lse. If no file is found, prompt the user for a file name and repeat
+the search process;
+@item
+Determine which (.esl or .lse) is the ``newer'' and ``load'' that file(s)
+i.e. ``compile'' the <name>.lse followed by the <name>-cust.lse (and write a new
+<name>.esl) or ``load'' the contents of the <name>.esl;
+@end enumerate
+
+@node Project Wide Templates and Local Customisations, Fast Load Files, Template Loading, Template System
+@section Project Wide Templates and Local Customisations
+The very first version of ELSE (written for the MicroEmacs editor ``mg'' - refer
+to @pxref{History}) was written to be used by a project team of 15+
+programmers. It was hoped, through ``mandating''@footnote{When did that ever
+work with herding cats... er, I mean programmers? :-)} the use of mg/ELSE, that
+the project coding standards would see better adherence. To allow some
+``flexibility'' to the individual, when ELSE loads a template set, it first
+loads a file named <major mode name>.lse and then searches the load path for a
+customisation file named <major mode name>-cust.lse -- thus a project wide
+coding standard can be implemented in some central path for the entire project
+and the individual can provide personal customisations using the customisation
+file (located in a separate path).
+
+@node Fast Load Files, Template File Layout, Project Wide Templates and Local Customisations, Template System
+@section Fast Load Files
+For convenience, ELSE manages a ``fast loading'' system for templates
+i.e. whenever a template set is loaded/compiled for the very first time, then
+ELSE will write the resulting Emacs Elisp objects to a separate file. In
+subsequent edit sessions, when ELSE is invoked, it checks the template file(s)
+against the fast load variant and if the fast load variant has a newer time
+stamp, then it loads the template set from the fast load file rather than the
+template files. This is a faster process on older/slower computers. The fast
+load files are stored/located in the path indicated by the custom variable
+else-fast-load-directory. If either of the .lse files have a newer time stamp,
+then ELSE first loads the main template file, followed by the customisation file
+and (re)writes a new fast load file.
+
+@node Template File Layout, Customisation, Fast Load Files, Template System
+@section Template File Layout
+
+@menu
+* Syntactic Conventions::
+* Language Definition::
+* Placeholders::
+@end menu
+
+@node Syntactic Conventions, Language Definition, Template File Layout, Template File Layout
+@subsection Syntactic Conventions for Template Definitions
+
+General syntactic conventions used in a language template file:
+
+@enumerate
+@item
+Case -- use upper case for all keywords of a template definition. ELSE will
+generate an error if it can't scan a keyword e.g. ``END DEFINE'' is good, ``End
+DEFINE'' will fail during the compile phase. Placeholder names do not have to be
+upper case, however, the compile process will convert them to upper case and any
+template extraction will read them back in upper case.
+@item
+Enclose any text strings that contain embedded spaces with quotes.
+@item
+The @kbd{@@} character is used to define ``hard spaces'' in the body of a
+definition.
+@end enumerate
+
+@node Language Definition, Placeholders, Syntactic Conventions, Template File Layout
+@subsection Language Definition
+The language definition defines the global aspects of a language and serves as
+the vehicle to contain and group the placeholder definitions. Each template set
+may have only one language definition. A typical language definition is shown in
+@ref{Ex:ex2}.
+
+@float Example, Ex:ex2
+@example
+1  DELETE LANGUAGE C
+2  DEFINE LANGUAGE C
+3      /INITIAL_STRING="@{compilation_unit@}"
+4      /PUNCTUATION_CHARACTERS="*.;(),"
+5      /VALID_IDENTIFIER_CHARACTERS="a-zA-Z_0-9-''
+6      /INDENT_SIZE=2
+7      /VERSION=1.7
+8
+9  END DEFINE
+@end example
+@caption{Sample Language Definition}
+@end float
+
+With reference to @ref{Ex:ex2}:
+@itemize
+@item
+@code{Lines 1 - 2} -- defines the language and its name;
+@item
+@code{Line 3} -- defines the string that ELSE will autmatically insert when it
+is invoked in an empty buffer e.g. @code{@{compilation_unit@}}
+@item
+@code{Line 4} -- used by the kill placeholder process to ``neaten'' the line
+after a placeholder is killed e.g. killing the @code{declarator} placeholder in
+the following line
+
+@b{Before}:
+@example
+@code{typedef const float abc, [declarator]...;}
+@end example
+
+@b{After}:
+@example
+@code{typedef const float abc;}
+@end example
+
+If the ``@kbd{;}'' character was not included in Line 4 then the line (after the
+kill) would have looked like this:
+@example
+@code{typedef const float abc ;}
+@end example
+
+@item
+@code{Line 5} -- (Elisp regexp) used to define the range of characters that
+might constitute a valid placeholder name in the language i.e. this expression
+is used to define the legal characters when searching backwards in the buffer
+for a valid abbreviation to expand e.g. if the string @code{@@if} was expanded
+then ELSE would use ``if'' as the possible (placeholder) abbreviation -- because
+the '@@' character is not part of the character range.
+
+@item
+@code{Line 6} -- Indentation to use with the placeholder definitions -- to avoid
+having ``fixed'' indentation that must be changed (manually) every time the
+coding standards change, all code indentation in the placeholder definitions are
+``normalised'' during the compilation phase and computed relative to the first
+indentation in a definition i.e. @ref{Ex:ex4} shows the (partial) definition of
+a switch statement. In this example, when ELSE ``compiles'' this definition, it
+allocates (normalises) the indentation at Line 8 to be an indent value of 1 and
+any further indentation (such as the indentation at lines 10 - 11, 14 - 15) are
+calculated as multiples of the first occurrence. When the placeholder is
+expanded, ELSE multiplies the normalised values by the value at Line 6. Thus, if
+Line 6 of @ref{Ex:ex2} was changed to 4 then when the case statement is expanded
+lines 8 - 9, 12 - 13 of @ref{Ex:ex4} would be indented 4 spaces, but lines 10 -
+11, 14 - 15 of @ref{Ex:ex4} would be indented 8 spaces (since in the definition
+they are ``twice'' the indentation of line 8).
+
+@float Example, Ex:ex4
+@example
+1  DELETE PLACEHOLDER SWITCH_STATEMENT
+2      /LANGUAGE=C
+3  DEFINE PLACEHOLDER SWITCH_STATEMENT
+4      /LANGUAGE=C
+5      .
+6      .
+7      "switch (@{expression@}) @{"
+8      "  case @{constant_expression@}:"
+9      "  [case @{constant_expression@}:]..."
+10     "    [statement]..."
+11     "    break;"
+12     "  [case_part]..."
+13     "  default :"
+14     "    [statement]..."
+15     "    break;"
+16     "@}"
+17
+18 END DEFINE
+@end example
+@caption{Indentation space interpretation}
+@end float
+@quotation Note
+For convenience, the language customisation file (<major mode name>-cust.lse)
+may contain a language definition statement that redefines the indentation value
+-- this is intended to allow the user to override any ``project'' wide coding
+standards for their own personal use i.e. easily swapping backwards and
+forwards. This statement would look like this:
+@example
+ DEFINE LANGUAGE C
+     /INDENT_SIZE=4
+ END DEFINE
+@end example
+This does not define a new language but rather signals to ELSE that an
+attribute is about to be overridden.
+@end quotation
+@cindex Hard Spaces
+@quotation Addendum
+Since space characters at the start of a line in a definition are ``normalised''
+an alternate method is required when the user wants to make sure the spacing is
+not transformed -- this usually occurs in ``headers'' within files for
+instance. To ``force'' a space at the beginning of a line use the @kbd{@@}
+character for each ``hard'' space desired e.g. the following line, when inserted
+during an expansion, will have 3 spaces:
+@example
+"@@@@@@The rain in Spain falls mainly on the plain"
+@end example
+@cindex hard spacing
+@end quotation
+@item
+@code{Line 7} -- Version information for the language set.
+@end itemize
+
+@node Placeholders,  , Language Definition, Template File Layout
+@subsection Placeholders
+Placeholders come in four possible flavours:
+@enumerate
+@item
+Menu -- offers a range of choices leading to further expansion;
+@item
+NonTerminal -- defines a language structure to be inserted at point i.e. the
+switch statement in @ref{Ex:ex4};
+@item
+Terminal -- specifies an informational (hint) message to the user regarding
+valid values to replace the placeholder; and
+@item
+Referential -- a placeholder that references another placeholder definition.
+@end enumerate
+
+The first three types of placeholder have the common attributes/structure shown in
+@ref{Ex:ex5}.
+
+@float Example, Ex:ex5
+@example
+1  DEFINE PLACEHOLDER STATEMENT
+2      /LANGUAGE=C
+3      /AUTO_SUBSTITUTE
+4      /SUBSTITUTE_COUNT=1
+5      /DESCRIPTION=""
+6      /DUPLICATION=CONTEXT_DEPENDENT
+7      /SEPARATOR=""
+8      /TYPE=MENU
+9      .
+10     .
+11     .
+12 END DEFINE
+@end example
+@caption{Placeholder Common Attributes}
+@end float
+
+@enumerate 1
+@item
+@code{Line 1} -- starts the the placeholder definition and assigns a placeholder
+name;
+@item
+@code{Line 2} -- defines the language set the placeholder belongs too -- the
+language referenced must have already been ``created'' using a language
+definition template (@pxref{Language Definition});
+@item
+@code{Line 3} -- defines an attribute that informs ELSE whether edit actions in
+a placeholder of this name should be repeated in one or more other instances of
+the placeholder in the buffer:
+@enumerate a
+@item
+/AUTO_SUBSTITUTE -- specifies (when the placeholder is expanded or typed into)
+whether the text that replaces the placeholder should be repeated (auto
+substituted) into any other placeholders of the same name
+@item
+/NOAUTO_SUBSTITUTE -- no auto substitution should be attempted.
+@end enumerate
+Typical useage would be in the following situation:
+@example
+@@node @{node-text@},,
+@@chapter @{node-text@}
+[cindex]
+@{text@}
+@end example
+The placeholder @code{node-text} is defined with @code{/AUTO_SUBSTITUTE} and a
+@code{/SUBSTITUTE_COUNT=1}. When the user types into the first occurrence of the
+placeholder the text/edit actions are repeated in the second instance of the
+placeholder. All edit actions are repeated until the user navigates away and
+performs an edit operation somewhere else in the buffer.
+@item
+@code{Line 4} -- (optional) specifies the number of occurrences ELSE should look
+for when it starts performing an auto-substitution i.e. this line is only valid
+when @code{Line 3} is @code{/AUTO_SUBSTITUTE}. This value defaults to 1 if it is
+not present. ELSE can handle substitution counts up to 7 and will issue an error
+message if the value specified is greater @footnote{The most I have ever used is
+2!}.
+@item
+@code{Line 5} -- specifies some descriptive text that is shown if the
+placeholder is referenced from a menu (shown beside the menu entry if it is not
+empty).
+@item
+@code{Line 6} -- if the placeholder is followed by ellipses (@dots{}) then this
+attribute specifies the ``direction'' of where the placeholder is duplicated. It
+has three possible values:
+@enumerate a
+@item
+VERTICAL -- the placeholder is repeated on the next line;
+@item
+HORIZONTAL -- the placeholder is repeated horizontally (to the right); and
+@item
+CONTEXT_DEPENDENT -- ELSE will determine, based on the context of the
+surroundings, whether the placeholder is repeated vertically or horizontally.
+@end enumerate
+@item
+@code{Line 7} -- contains the ``separator'' text (string) to be used when the
+placeholder is being duplicated i.e. as part of the duplication, the separator
+string is appended to the placeholder undergoing expansion
+@item
+@code{Line 8} -- specifies the placeholder type i.e. MENU, NONTERMINAL or
+TERMINAL.
+@end enumerate
+
+A referential placeholder has the following form:
+@float Example, Ex:ex9
+@example
+DEFINE PLACEHOLDER CLASSNAME
+    /LANGUAGE=Python
+    /PLACEHOLDER=IDENTIFIER
+
+END DEFINE
+@end example
+@caption{Referential Placeholder}
+@end float
+The template designer would use this form of placeholder to cater for situations
+where a placeholder is ``just like this'' other placeholder. Sometimes template
+sets can be created from an EBNF of the language in question (I have a program I
+wrote to help do this) and the EBNF does this type of thing with the language
+definition. These situations can be easily factored out by the template designer
+but the ``feature'' is left in because some of the original templates use it and
+I never bothered factoring them out -- the user never notices.
+
+@menu
+* Menu Placeholders::
+* NonTerminal Placeholders::
+* Terminal Placeholders::
+@end menu
+
+@node Menu Placeholders, NonTerminal Placeholders, Placeholders, Placeholders
+@subsubsection Menu Placeholders
+A typical menu placeholder and the menu popup presented to the user is shown in
+@ref{Ex:ex6}. The definition lists the possible choices offered to the user when
+the @code{statement} placeholder is expanded.
+
+@float Example, Ex:ex6
+@example
+DEFINE PLACEHOLDER STATEMENT
+    .
+    .
+    /TYPE=MENU
+                                      @result{}
+    "labeled_statement"/PLACEHOLDER             labeled_statement
+    "compound_statement"/PLACEHOLDER            compound_statement
+    "@{assignment_expression@};"                  @{assignment_expression@};
+    "selection_statement"/PLACEHOLDER           selection_statement
+    "iteration_statement"/PLACEHOLDER           iteration_statement
+    "jump_statement"/PLACEHOLDER                jump_statement
+    "comment_statement"/PLACEHOLDER             comment_statement
+
+END DEFINE
+@end example
+@caption{Menu Placeholder and Resulting Expansion}
+@end float
+
+@page
+Each line in the ``body'' of a menu definition can have the following properties
+or attributes:
+@sp 1
+@enumerate
+@item
+self--insert -- that is, the text line will be inserted (if selected) at point;
+@vskip 5pt
+@item
+placeholder reference -- references another placeholder definition and is
+indicated with the @code{/PLACEHOLDER} attribute. The @code{/PLACEHOLDER}
+attribute may be followed by the one or more of these attributes:
+@vskip 5pt
+@enumerate a
+@item
+@code{/NOFOLLOW}(default) -- don't ``follow' the definition of the referenced
+placeholder (see @code{/FOLLOW} below);
+@vskip 5pt
+@item
+@code{/FOLLOW} -- indicates to ELSE that it should ``follow'' the reference and
+substitute the referenced placeholder definition into the menu at this line. The
+referenced placeholder may be a menu or nonterminal placeholder (it doesn't make
+sense for it to be a terminal placeholder). If it is referencing a nonterminal
+placeholder then the body of that placeholder must be a single line of text --
+for obvious reasons, otherwise ELSE ignores the follow request. @ref{Ex:ex10}
+shows what happens when the referenced placeholder is a menu and @ref{Ex:ex11}
+shows what happens if the referenced placeholder is a nonterminal (with a single
+insert line);
+@vskip 5pt
+@item
+@code{/DESCRIPTION} -- Provide a description to display when the menu item is
+displayed to the user.
+@end enumerate
+@end enumerate
+@sp 1
+@fonttextsize 10
+@float Example, Ex:ex10
+@example
+DEFINE PLACEHOLDER STATEMENT                DEFINE PLACEHOLDER JUMP_STATEMENT
+    .                                           .
+    .                                           .
+    /TYPE=MENU                                  /TYPE=MENU
+
+    "labeled_statement"/PLACEHOLDER             "goto @{identifier@};"
+    "compound_statement"/PLACEHOLDER            "continue;"
+    "@{assignment_expression@};"                  "break;"
+    "selection_statement"/PLACEHOLDER           "return [expression];"
+    "iteration_statement"/PLACEHOLDER
+    "jump_statement"/PLACEHOLDER/FOLLOW     END DEFINE
+    "comment_statement"/PLACEHOLDER
+
+END DEFINE
+
+                    labeled_statement
+                    compound_statement
+                    @{assignment_expression@};
+                    selection_statement
+                    iteration_statement
+       @result{}           goto @{identifier@};
+                    continue;
+                    break;
+                    return [expression];
+                    jump_statement
+                    comment_statement
+
+@end example
+@caption{Menu Referencing another menu definition}
+@end float
+@fonttextsize 11
+
+@float Example, Ex:ex11
+@smallexample
+DEFINE PLACEHOLDER STATEMENT                DEFINE PLACEHOLDER JUMP_STATEMENT
+    .                                           .
+    .                                           .
+    /TYPE=MENU                                  /TYPE=NONTERMINAL
+
+    "labeled_statement"/PLACEHOLDER             "goto @{identifier@};"
+    "compound_statement"/PLACEHOLDER
+    "@{assignment_expression@};"            END DEFINE
+    "selection_statement"/PLACEHOLDER
+    "iteration_statement"/PLACEHOLDER
+    "jump_statement"/PLACEHOLDER/FOLLOW
+    "comment_statement"/PLACEHOLDER
+
+END DEFINE
+
+                        labeled_statement
+                        compound_statement
+                        @{assignment_expression@};
+                        selection_statement
+       @result{}               iteration_statement
+                        goto @{identifier@};
+                        jump_statement
+                        comment_statement
+
+@end smallexample
+@caption{Menu Referencing a NonTerminal Placeholder}
+@end float
+
+@node NonTerminal Placeholders, Terminal Placeholders, Menu Placeholders, Placeholders
+@subsubsection NonTerminal Placeholders
+A ``nonterminal'' placeholder is where all the action is with ELSE. This is the
+placeholder that actually inserts code constructs into the buffer. @ref{Ex:ex7}
+shows the template for a function definition in Emacs Elisp. After the
+expansion, ELSE will place point in the first placeholder --
+@code{@{identifier@}}.
+
+
+@float Example, Ex:ex7
+@example
+DEFINE PLACEHOLDER DEFUN
+    /LANGUAGE="Emacs-Lisp"
+    .
+    .
+    /TYPE=NONTERMINAL
+
+    "(defun @{identifier@} ([defun_arguments]...)"
+    "  [Documentation]"
+    "  [interactive]"
+    "  @{statement@}...)"
+
+END DEFINE
+@end example
+@caption{Nonterminal Placeholder}
+@end float
+
+@node Terminal Placeholders,  , NonTerminal Placeholders, Placeholders
+@subsubsection Terminal Placeholders
+A ``terminal'' placeholder sits at the end of the expansion tree i.e. there are
+no further expansions available. The template designer uses terminal
+placeholders to provide ``hints''/are informational as to what the user is
+expected to enter for a valid results e.g. @ref{Ex:ex8} shows an elaborate
+example of a terminal placeholder that can be found in the Ada language template
+file. ELSE will put this block of text up to the user as a popup hint when the
+user attempts to expand an @code{expression} placeholder.
+
+@float Example, Ex:ex8
+@example
+DEFINE PLACEHOLDER EXPRESSION
+  /LANGUAGE="Ada"
+  .
+  .
+  /TYPE=TERMINAL
+
+  "Enter a valid expression eg. VOLUME, not DESTROYED, "
+  " 2*LINE_COUNT,4.0,4.0 + A, B**2 4.0*A*C, PASSWORD(1 .. 3) = "BWV","
+  "COUNT in SMALL_INT, COUNT not in SMALL_INT, INDEX = 0 or ITEM_HIT"
+  "(COLD and SUNNY) or WARM, A**(B**C), (1 .. 10 => 0), SUM,        "
+  "INTEGER'LAST, SINE(X), COLOR'(BLUE), REAL(M*N), (LINE_COUNT + 10)"
+
+END DEFINE
+@end example
+@caption{Terminal Placeholder}
+@end float
+
+Realistically, there is (obviously) as lot of work for the template designer
+when producing this kind of information and it is really of limited use to a
+knowledgeable programmer. When the basic templates sets were produced --
+sometimes from EBNF -- I took the easy way out and produced hints like this for
+the Emacs Elisp @code{identifier} placeholder:
+
+@quotation
+``Just type in a legal Elisp identifier''.
+@end quotation
+
+@node Customisation,  , Template File Layout, Template System
+@section Customisation
+There are several ways to customise a placeholder with ELSE:
+@enumerate
+@item
+Edit/add @footnote{ELSE comes with a template set designed to create templates
+-- Template.lse, just edit a file with a .lse extension, turn on ELSE mode and
+specify @code{template} when prompted for a template file name} a definition in a
+template file and compile it; or
+@item
+Extract a definition into the current buffer, modify it and compile it.
+@end enumerate
+
+The first mechanism is the obvious preferred approach when you want the change
+to be permanent or available across edit sessions. The second approach is
+preferred/easier for temporary customisations or when experimenting with
+something you might want to make permanent i.e. use the 2nd method, get it
+working and then add it to one of the template files for the template set.
+
+To extract a placeholder definition (from a currently loaded template set):
+@enumerate
+@item
+Go to the end of the buffer in which ELSE is enabled -- because the template
+compile process only expects to see template definitions from point to the end
+of the buffer;
+@item
+extract the definition you want customised using the command
+@code{else-extract-placeholder};
+@item
+modify the template definition; and
+@item
+''compile'' it into the current edit session using @code{else-compile-buffer}.
+@end enumerate
+
+For example, say you have a (C language) @code{if_statement} placeholder that
+generates an if construct like this:
+
+@example
+    if (@{expression@})
+    @{
+      @{statement@}@dots{}
+    @}
+    [elsif_part]@dots{}
+    [else_part]
+@end example
+and you want the opening brace on the same line as the ``if''. Then you would
+perform the following sequence (assumes you are in a C language buffer with ELSE
+mode enabled):
+@enumerate
+@item
+@code{else-extract-placeholder} -- respond with IF_STATEMENT at the prompt;
+@item
+make the change as shown here:
+@example
+DELETE PLACEHOLDER IF_STATEMENT        DELETE PLACEHOLDER IF_STATEMENT
+    /LANGUAGE=C                            /LANGUAGE=C
+DEFINE PLACEHOLDER IF_STATEMENT        DEFINE PLACEHOLDER IF_STATEMENT
+    /LANGUAGE=C                            /LANGUAGE=C
+    .                                      .
+    .                                      .
+    .                          @result{}          .
+    /TYPE=NONTERMINAL                      /TYPE=NONTERMINAL
+
+    "if (@{expression@})"                   "if (@{expression@}) @{"
+    "@{"                                    "  @{statement@}@dots{}"
+    "  @{statement@}@dots{}"                    "@}"
+    "@}"                                   "[elsif_part]@dots{}"
+    "[elsif_part]@dots{}"                     "[else_part]"
+    "[else_part]"
+                                        END DEFINE
+END DEFINE
+
+@end example
+@item
+Position point at the beginning of the @code{DELETE} and run @kbd{M-x
+else-compile-buffer} -- the modified construct/definition will be available for
+the rest of the edit session.
+@item
+(optionally) copy the new definition at the end of the C-cust.lse -- it is not
+necessary to delete the previous version because the ``DELETE'' statement will
+delete any prior definitions of @code{if_statement} and then the new definition
+will replace it.
+@end enumerate
+
+@node Custom Variables, Concept Index, Template System, Top
+@comment  node-name,  next,  previous,  up
+@chapter Custom Variables
+The custom variables used by ELSE, are available through the Customisation
+Groups under the customisation group @clicksequence{Programming @click{} Tools
+@click{} Emacs LSE}. These variables are (listed alphabetically):
+
+@deffn {Custom Variable} else-Alternate-Mode-Names
+With Emacs 22.1, the default mode name for files with the .c extension changed
+from ``C'' to ``C/l'' - this caused problems with the basic rule that ELSE uses
+to formulate the name of the template file from the mode name (@pxref{Template
+File Naming}). This variable was created to allow the user to provide an
+alternate ``mode'' name that ELSE can use in locating the required template
+files.
+@end deffn
+
+@deffn {Custom Variable} else-kill-proceed-to-next-placeholder
+This is a ``usability'' variable that controls the behaviour of the command
+@value{full_kill} after it has executed. If this variable is set (on)
+then ELSE will attempt to perform a @value{full_next} after
+successfully killing a placeholder. If the variable is ``off'' then the cursor
+will remain at the point at which the kill command was executed. The default is
+@code{nil} (off).
+@end deffn
+
+@deffn {Custom Variable} else-only-proceed-within-window
+This flag is used only if the else-kill-proceed-to-next-placeholder flag is
+set. The movement to the next placeholder will only occur if the placeholder is
+visible in the current window. If this flag is off then the movement will
+proceed (possibly) causing visual disorientation to the user when the screen
+display jumps. The default for this variable is 't' (on).
+@end deffn
+
+@deffn {Custom Variable} else-fast-load-directory
+This variable contains the path to where ELSE expects to write/read template
+fast load files (@pxref{Fast Load Files}).
+
+@end deffn
+
+@node Concept Index,  , Custom Variables, Top
+@unnumbered Concept Index
+
+@printindex cp
+
+@bye
+@c  LocalWords:  settitle iftex afourpaper setchapternewpage ifinfo Milliken sp
+@c  LocalWords:  titlepage center titlefont vskip pt filll dir Keymaps cindex
+@c  LocalWords:  elsemode CTRL macs anguage diting dfn lse pxref setfilename VR
+@c  LocalWords:  nolonger elsif Elipses mis deffn LRM Integer'Last Color emph
+@c  LocalWords:  detailmenu kbd TexInfo texi Pentium ensitive dircategory ditor
+@c  LocalWords:  direntry ifnottex Keybindings Placeholders alist capitalize py
+@c  LocalWords:  lineno cust NOAUTO DELETE'd DEFINE'd EBNF setnu pdf Defuns SPC
+@c  LocalWords:  xref ELSE's templating noindent placeholders Compaq abbrev var
+@c  LocalWords:  smallexample keybinding texinfo prev  Leake subsubsection XYZ
+@c  LocalWords:  actioned ABC DEF Modula ENBF elsif esl url authorized gs cp el
+@c  LocalWords:  printindex LSE's Elisp DEC's LSEDIT VMS customising TPU ISPs
+@c  LocalWords:  customisable MicroEmacs cmd samp behaviour insertcopying ifC
+@c  LocalWords:  structs yasnippet normalised normalises

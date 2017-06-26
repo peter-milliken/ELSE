@@ -1,6 +1,8 @@
 # ELSE
 Emacs Language Sensitive Editor
-ELSE is a minor mode for Emacs, designed to work with any major mode. The aim is to provide a seamless mechanism to generate language constructs easily and intuitively with a minimum of keystrokes and interference with the user. It's primary application is a minor mode for any programming language (major mode) but it can be used for any editing task that involves generation of repetitive text/blocks of text e.g. there is a template file for Texinfo mode. All that is required to use ELSE with a major mode is a template file defining the textual constructs that define typical textual constructs used by that mode i.e. when creating a node in a Texinfo file, it would be advantageous to generate the node entry as well as a choice to the user for a chapter/section/subsection heading - both at the same time. A template entry that would achieve this (for a chapter node) is:
+ELSE is a minor mode for Emacs, designed to work with any major mode. The aim is to provide a seamless mechanism to generate language constructs easily and intuitively with a minimum of keystrokes and interference with the user. It's primary application is a minor mode for any programming language (major mode) but it can be used for any editing task that involves generation of repetitive text/blocks of text e.g. there is a template file for Texinfo mode. 
+
+All that is required to use ELSE with a major mode is a template file defining the textual constructs that define typical textual constructs used by that mode i.e. when creating a node in a Texinfo file, it would be advantageous to generate the node entry as well as a choice to the user for a chapter/section/subsection heading - both at the same time. A template entry that would achieve this (for a chapter node) is:
 
 ```
 DEFINE PLACEHOLDER CHAPTER-NODE
@@ -40,3 +42,30 @@ The user could then just start typing the text for the node name - ELSE will aut
 The user could then navigate (else-next - C-x / n) to the next placeholder ([cindex]) and choose to either "expand" it (if they desired an content index) using the command else-expand (C-x / e) or delete it using else-kill (C-x / k). If the placeholder is deleted, then ELSE will delete the entire placeholder text, notice the line is blank and then delete the blank line i.e. clean-up after itself.
 
 Placeholders are "persistent" over edit session and visible - probably the biggest advantage to using ELSE over other template systems, which use invisible markers that disappear at the most inappropriate times or just aren't there at all when the edit session is restarted.
+
+Just to provide a further "flavour" of what a coding construct might look like, here is the placeholder definition for the Python "with" statement:
+```
+DEFINE PLACEHOLDER WITH_STMT 
+    /LANGUAGE="Python" 
+    /NOAUTO_SUBSTITUTE 
+    /DESCRIPTION=""
+    /DUPLICATION=CONTEXT_DEPENDENT 
+    /SEPARATOR="" 
+    /TYPE=NONTERMINAL 
+
+    "with {expression} [as {target}]:"
+    "  {statement}..."
+
+END DEFINE
+```
+The user would type "withC-x / e" to get this:
+```
+   with {expression} [as {target}]:
+     {statement}...
+```
+After supplying and "expression", the user would navigate to the "as {target}" placeholder and either expand it or kill it. If killed, the buffer would look like this:
+```
+   with some_expression:
+     {statement}...
+```
+Note that ELSE "cleaned up" after the kill command by moving the ":" character hard up against the expression - so there is no extraneous actions required and then moved point automatically to the "{statement}" placeholder.

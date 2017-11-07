@@ -307,6 +307,7 @@ language was tagged as non-dirty."
   (let ((tab-size (oref else-Current-Language :tab-size))
         (first-line t)
         (line nil)
+        (this-buffer (current-buffer))
         (text (oref obj :insert-text)))
     (save-match-data
       (dolist (current-line text)
@@ -319,11 +320,11 @@ language was tagged as non-dirty."
         (when (eq (compare-strings line 0 2 "\\@" 0 2) t)
           (setq line (substring line 1)))
         (unless first-line
-          (insert (make-string (* tab-size (insert-line-indent current-line)) ?\ )))
-        (insert line)
+          (princ (make-string (* tab-size (insert-line-indent current-line)) ?\ ) this-buffer))
+        (princ line this-buffer)
         (setq first-line nil)
         (unless (memq current-line (last text))
-          (newline)
+          (terpri this-buffer)
           (indent-to insert-column))))))
 
 (cl-defmethod add-line ((obj else-base) text)

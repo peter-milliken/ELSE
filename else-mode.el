@@ -715,7 +715,7 @@ window."
   :type 'string
   :group 'ELSE)
 
-(defcustom else-Alternate-Mode-Names '(("C/l" . "C") ("C++/l" . "C++"))
+(defcustom else-Alternate-Mode-Names '(("C/l" . "C") ("C++/l" . "C++") ("Java/l" . "Java"))
   "Translate major mode name -> valid (prefix) file name."
   :type '(repeat (cons string string))
   :group 'ELSE)

@@ -38,6 +38,13 @@
 (require 'eieio)
 (require 'else-lexer)
 
+
+(defcustom else-overwrite-placeholder-on-conflict nil
+  "If non-nil, replace the placeholder with the new version.
+When nil, throw an error."
+  :type 'boolean
+  :group 'ELSE)
+
 (cl-defstruct menu-entry
   (type nil)                            ; 'placeholder or 'token or nil
   (text "")                             ; self-insert text or menu name
@@ -164,8 +171,13 @@
               (else-menu-placeholder-p element))
     (signal 'else-compile-error (list "Attempting to add an illegal object to language" (current-buffer))))
   (when (intern-soft (oref element :name) (oref obj placeholders))
-    (signal 'else-compile-error (list (format "Placeholder %s already defined, delete first" (oref element :name))
-                                      (current-buffer))))
+
+    (if else-overwrite-placeholder-on-conflict
+        (delete-element (access-language else-Language-Repository
+                                         (oref element :language-name))
+                        (oref element :name))
+      (signal 'else-compile-error (list (format "Placeholder %s already defined, delete first" (oref element :name))
+                                        (current-buffer)))))
   (setplist (intern (upcase (oref element :name)) (oref obj :placeholders)) element))
 
 (cl-defmethod delete-element ((obj else-language) name)

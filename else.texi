@@ -8,9 +8,9 @@
 @c %**end of header
 
 @c Some global values used in the info file
-@set doc_version 2.0
+@set doc_version 2.1
 @set ELSE_version 2
-@set issue_date 31st January, 2017
+@set issue_date 21st November, 2017
 
 @set expand @kbd{C-c / e}
 @set next @kbd{C-c / n}
@@ -83,34 +83,6 @@ Software Foundation.
 @vskip 0pt plus 1filll
 @insertcopying
 @sp 2
-@c Edition @value{doc_version} @*
-@c Revised for ELSE Version @value{ELSE_version},@*
-@c @value{issue_date}.@*
-
-@c @sp 2
-@c
-@c Permission is granted to make and distribute verbatim copies of this manual
-@c provided the copyright notice and this permission notice are preserved on all
-@c copies.
-@c
-@c @ignore
-@c Permission is granted to process this file through TeX and print the results,
-@c provided the printed document carries a copying permission notice identical to
-@c this one except for the removal of this paragraph (this paragraph not being
-@c relevant to the printed manual).
-@c
-@c @end ignore
-@c Permission is granted to copy and distribute modified versions of this manual
-@c under the conditions for verbatim copying, provided also that the sections
-@c entitled ``Copying'' and ``GNU General Public License'' are included exactly as
-@c in the original, and provided that the entire resulting derived work is
-@c distributed under the terms of a permission notice identical to this one.
-@c
-@c Permission is granted to copy and distribute translations of this manual into
-@c another language, under the above conditions for modified versions, except that
-@c this permission notice may be stated in a translation approved by the Free
-@c Software Foundation.
-
 @end titlepage
 @shortcontents
 @contents
@@ -122,67 +94,6 @@ Software Foundation.
 This Info file contains edition @value{doc_version} of the ELSE Users Manual,
 corresponding to Version @value{ELSE_version} of the Elisp file else-mode.el.
 @end ifinfo
-
-@iftex
-@ignore
-@unnumbered Preface (Version 2)
-This document describes version 2 of ELSE.  Version 2 does not, in the main,
-introduce any new features over version 1. ELSE Version 1 was written back in
-the dark ages of Emacs 19.X. Version 2 is a complete re-write of ELSE from the
-ground up in an attempt to make use of features and packages of Emacs Lisp that
-have been introduced since then.
-
-From the user perspective, the only noticeable difference between ELSE v2 and
-ELSE v1 is that the boundary between ``tokens'' and ``placeholders'' has become
-even more blurred@footnote{In version 1, tokens were equivalent to, or could be
-thought of, as an abbreviation for a placeholder, although some token
-definitions were standalone definitions in their own right.}. In version 2
-everything (tokens and placeholders) can be ``expanded'' from an initial
-abbreviation e.g. every language template set defines a @dfn{statement}
-placeholder, ELSE v2 allows the user to ``expand'' any textual string that could
-be considered an abbreviation for ``statement'' into the @dfn{statement}
-placeholder@footnote{Completion of the abbreviated string is attempted using the
-defined list of token/placeholder names for the language, if more than one
-possible match exists then the matches are presented as a menu selection to the
-user.}.
-
-From the perspective of a template developer, I used the re-write as an
-opportunity to separate the code that ``reads'' the language template files from
-the rest of the code@footnote{@dfn{else-template.el} contains the code that
-reads the template files and @dfn{else-structs.el} contains the data structures
-that needs to be ``populated''.}. One or two users in the past
-requested/suggested that the template syntax would (in their opinion) be better
-written in a more (E)lisp style. Whilst there is no way to divorce a template
-developer from having to understand the syntax of the template language I didn't
-consider making it more (E)lisp like an advantage over what was already in use
-and I certainly didn't want to expend any further effort creating a new syntax.
-
-@unnumbered Preface (Version 1)
-This manual documents the use and creation/customisation of language templates
-for ELSE. There are two levels of reader assumed by this document; a user and a
-language template developer/maintainer. The two are not mutually exclusive.
-
-This manual is a mixture of user manual and reference manual. All readers are
-recommended to read the Tutorial at the end of the manual (@xref{Tutorial}). In
-addition, complete beginners to ELSE are recommended to read the first six
-chapters (Overview --- Using ELSE) and then the chapter on Customising Variables
-(but only after they have become familiar with ELSE). The rest of the manual is
-for the more adventurous who wish to either customise existing ELSE templates or
-create their own templates for any language that ELSE does not currently
-support (please make them available to the wider community if you do).
-
-If you dislike reading documentation then just focus on the sections for
-installing ELSE (@xref{Installation Instructions},) and the Tutorial
-@ref{Tutorial}. Once you have satisfied your initial curiosity about ELSE then
-you can come back and read the other portions of the manual. ELSE is an
-extremely powerful, but simple concept, so if you decide to persevere with using
-ELSE then you will sooner or later find yourself reading the entire manual. Much
-of ELSE's power comes from the ability for the user to customise the language
-templates for his/her own programming style.
-
-@end ignore
-
-@end iftex
 
 @menu
 * Overview::
@@ -484,14 +395,13 @@ not work with any previous version. If you need a version that works with Emacs
 prior to 25 (right back to 19), just drop me a line.
 @end quotation
 
-@ignore
-If using the @i{desktop} package, it is recommended that the function
-'else-activate-mode be added to the @i{'desktop-minor-mode-table} variable
-(easiest way is to @i{Browse} the Customization Groups and select
-@i{Environment} @expansion{} @i{Frames} @expansion{} @i{Desktop} @expansion{}
-@i{Desktop Minor Mode Table} and add @i{'else-activate-mode} against
-@i{else-mode}
-@end ignore
+Joe Schafer (@email{joe@@jschaf.com}) very kindly donated a basic else template
+mode for use when editing ELSE template files. To use this mode, include the
+following in your .emacs file:
+@example
+(require 'else-template-mode)
+@end example
+and invoke it using @command{else-template-mode}.
 
 It is recommended, but not necessary, that you install the ELSE info
 documentation. ELSE documentation consists of a TexInfo file (else.texi), an
@@ -1405,7 +1315,12 @@ display jumps. The default for this variable is 't' (on).
 @deffn {Custom Variable} else-fast-load-directory
 This variable contains the path to where ELSE expects to write/read template
 fast load files (@pxref{Fast Load Files}).
+@end deffn
 
+@deffn {Custom Variable} else-overwrite-placeholder-on-conflict
+If non-nil, on encountering a DEFINE statement, any previous definition will be
+(silently) deleted i.e. a DELETE statement is not required if this variable is
+non-nil. The default for this variable is @code{nil} (off).
 @end deffn
 
 @node Concept Index,  , Custom Variables, Top

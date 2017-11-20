@@ -1,7 +1,7 @@
 This is else.info, produced by makeinfo version 6.3 from else.texi.
 
 This manual is for 'Emacs Language Sensitive Editor (ELSE)' (version 2,
-31st January, 2017), a minor mode written for the GNU Emacs editor.
+21st November, 2017), a minor mode written for the GNU Emacs editor.
 
    Copyright (C) 1999 - 2017 Peter Milliken
 
@@ -28,7 +28,7 @@ END-INFO-DIR-ENTRY
 
 File: else.info,  Node: Top,  Next: Overview,  Prev: (dir),  Up: (dir)
 
-This Info file contains edition 2.0 of the ELSE Users Manual,
+This Info file contains edition 2.1 of the ELSE Users Manual,
 corresponding to Version 2 of the Elisp file else-mode.el.
 
 * Menu:
@@ -339,6 +339,12 @@ been done for you.  Place the following command into your .emacs file:
      of Emacs 25 and may not work with any previous version.  If you
      need a version that works with Emacs prior to 25 (right back to
      19), just drop me a line.
+
+   Joe Schafer (<joe@jschaf.com>) very kindly donated a basic else
+template mode for use when editing ELSE template files.  To use this
+mode, include the following in your .emacs file:
+     (require 'else-template-mode)
+   and invoke it using 'else-template-mode'.
 
    It is recommended, but not necessary, that you install the ELSE info
 documentation.  ELSE documentation consists of a TexInfo file
@@ -1236,6 +1242,12 @@ Customisation Groups under the customisation group Programming -> Tools
      This variable contains the path to where ELSE expects to write/read
      template fast load files (*note Fast Load Files::).
 
+ -- Custom Variable: else-overwrite-placeholder-on-conflict
+     If non-nil, on encountering a DEFINE statement, any previous
+     definition will be (silently) deleted i.e.  a DELETE statement is
+     not required if this variable is non-nil.  The default for this
+     variable is 'nil' (off).
+
 
 File: else.info,  Node: Concept Index,  Prev: Custom Variables,  Up: Top
 
@@ -1255,59 +1267,59 @@ Concept Index
 
 
 Tag Table:
-Node: Top1226
-Node: Overview2282
-Node: What makes ELSE different from other templating systems?4562
-Node: Reporting Bugs6425
-Node: History7319
-Ref: History-Footnote-112212
-Ref: History-Footnote-212386
-Ref: History-Footnote-312448
-Ref: History-Footnote-412645
-Node: Definitions12747
-Node: Typographical Conventions13370
-Node: Installation Instructions13891
-Ref: Installation Instructions-Footnote-115884
-Node: Default Keybindings16039
-Node: Popup Menu Mappings16756
-Node: Using ELSE17488
-Node: Invoking ELSE17710
-Node: Navigating18214
-Node: Placeholder Expansion18842
-Ref: Ex:ex319462
-Ref: Ex:ex119858
-Ref: Placeholder Expansion-Footnote-120350
-Ref: Placeholder Expansion-Footnote-220466
-Node: Deleting Placeholders20621
-Node: Command Summary21058
-Ref: Command Summary-Footnote-123720
-Ref: Command Summary-Footnote-223805
-Node: Template System23997
-Node: Template File Naming24307
-Node: Template Loading25193
-Node: Project Wide Templates and Local Customisations26386
-Ref: Project Wide Templates and Local Customisations-Footnote-127388
-Node: Fast Load Files27471
-Node: Template File Layout28467
-Node: Syntactic Conventions28711
-Node: Language Definition29577
-Ref: Ex:ex230024
-Ref: Ex:ex432726
-Node: Placeholders34664
-Ref: Ex:ex535377
-Ref: Ex:ex938541
-Ref: Placeholders-Footnote-139357
-Node: Menu Placeholders39397
-Ref: Ex:ex639785
-Ref: Ex:ex1041932
-Ref: Ex:ex1143153
-Node: NonTerminal Placeholders44227
-Ref: Ex:ex744743
-Node: Terminal Placeholders45050
-Ref: Ex:ex845738
-Node: Customisation46652
-Ref: Customisation-Footnote-149857
-Node: Custom Variables50061
-Node: Concept Index51977
+Node: Top1227
+Node: Overview2283
+Node: What makes ELSE different from other templating systems?4563
+Node: Reporting Bugs6426
+Node: History7320
+Ref: History-Footnote-112213
+Ref: History-Footnote-212387
+Ref: History-Footnote-312449
+Ref: History-Footnote-412646
+Node: Definitions12748
+Node: Typographical Conventions13371
+Node: Installation Instructions13892
+Ref: Installation Instructions-Footnote-116151
+Node: Default Keybindings16306
+Node: Popup Menu Mappings17023
+Node: Using ELSE17755
+Node: Invoking ELSE17977
+Node: Navigating18481
+Node: Placeholder Expansion19109
+Ref: Ex:ex319729
+Ref: Ex:ex120125
+Ref: Placeholder Expansion-Footnote-120617
+Ref: Placeholder Expansion-Footnote-220733
+Node: Deleting Placeholders20888
+Node: Command Summary21325
+Ref: Command Summary-Footnote-123987
+Ref: Command Summary-Footnote-224072
+Node: Template System24264
+Node: Template File Naming24574
+Node: Template Loading25460
+Node: Project Wide Templates and Local Customisations26653
+Ref: Project Wide Templates and Local Customisations-Footnote-127655
+Node: Fast Load Files27738
+Node: Template File Layout28734
+Node: Syntactic Conventions28978
+Node: Language Definition29844
+Ref: Ex:ex230291
+Ref: Ex:ex432993
+Node: Placeholders34931
+Ref: Ex:ex535644
+Ref: Ex:ex938808
+Ref: Placeholders-Footnote-139624
+Node: Menu Placeholders39664
+Ref: Ex:ex640052
+Ref: Ex:ex1042199
+Ref: Ex:ex1143420
+Node: NonTerminal Placeholders44494
+Ref: Ex:ex745010
+Node: Terminal Placeholders45317
+Ref: Ex:ex846005
+Node: Customisation46919
+Ref: Customisation-Footnote-150124
+Node: Custom Variables50328
+Node: Concept Index52541
 
 End Tag Table

@@ -1,9 +1,9 @@
 ;;; else-template-mode.el --- Major mode for ELSE templates
 ;;
-;; Copyright (C) 1997 - 2017 Peter Milliken
+;; Copyright (C) 2017 Joe Schafer
 ;;
-;; Author: Peter Milliken <peter.milliken@gmail.com>
-;; Version: 2.00RC1
+;; Author: Joe Schafer <joe@jschaf.com>
+;; Version: 1.0
 ;; Package Requires: ()
 ;; Keywords: language sensitive abbreviation template placeholder
 ;;

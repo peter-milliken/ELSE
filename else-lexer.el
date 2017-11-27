@@ -24,6 +24,8 @@
 
 ;;  Parse a ELSE template file into a stream of tokens.
 
+;;; Code:
+
 (defconst else-defining-string
   "^\\s *\\(DELETE\\|DEFINE\\) +\\(TOKEN\\|PLACEHOLDER\\|LANGUAGE\\) +\\(\".*\"\\|\\S-+\\)")
 (defconst else-defining-command 1)
@@ -37,55 +39,56 @@
   "^\\s +\"\\(.+\\)\"/DESCRIPTION=\"\\(.+\\)\"")
 
 (defconst else-attribute-string "^\\s +\\(\\(\\(/[A-Z_]+\\) *= *\\(\".*\"\\|\\S-+\\)\\)\\|\\(/[A-Z_]+\\)\\) *$"
-  "expression to detect strings of form /xxxx=\"yyyy\" or /xxxx")
+  "Expression to detect strings of form /xxxx=\"yyyy\" or /xxxx.")
 (defconst else-attribute-with-value 3
-  "grouping for /xxxx=\"yyyy\"")
+  "Grouping for /xxxx=\"yyyy\".")
 (defconst else-attribute-value 4
-  "grouping for \"yyyy\"")
+  "Grouping for \"yyyy\".")
 (defconst else-attribute-no-value 5
-  "grouping for /xxxx")
+  "Grouping for /xxxx.")
 
 (defconst else-text-string "^\\s +\\(\".*\"\\)"
-  "Expression for the 'body' of any definitions")
+  "Expression for the 'body' of any definitions.")
 
 (defconst else-trailing-attribute "/[A-Z]+"
-  "Expression for /PLACEHOLDER/TOKEN/FOLLOW/NOFOLLOW that may trail a menu entry")
+  "Expression for /PLACEHOLDER/TOKEN/FOLLOW/NOFOLLOW that may trail a menu entry.")
 
 (defconst else-end-define "^\\s *END +DEFINE"
-  "END DEFINE")
+  "END DEFINE.")
 
 (cl-defstruct token
-  (type nil)                         ; token value - refer to 'attribute-mapping
+  (type nil)                         ; token value - refer to 'else-attribute-mapping
   (value nil)                        ; value accompanying the token (if present)
   (line-no nil))                     ; line #
 
-(defvar attribute-mapping '(("/LANGUAGE" . language)
-                            ("/NOAUTO_SUBSTITUTE" . noauto-substitute)
-                            ("/AUTO_SUBSTITUTE" . auto-substitute)
-                            ("/SUBSTITUTE_COUNT" . substitution-count)
-                            ("/DESCRIPTION" . description)
-                            ("/DUPLICATION" . duplication)
-                            ("/SEPARATOR" . separator)
-                            ("/TYPE" . type)
-                            ("CONTEXT_DEPENDENT" . context-dependent)
-                            ("VERTICAL" . vertical)
-                            ("HORIZONTAL" . horizontal)
-                            ("NONTERMINAL" . nonterminal)
-                            ("TERMINAL" . terminal)
-                            ("MENU" . menu)
-                            ("/PLACEHOLDER" . placeholder)
-                            ("/TOKEN" . token)
-                            ("/FOLLOW" . follow)
-                            ("/NOFOLLOW" . nofollow)
-                            ("/INITIAL_STRING" . initial-string)
-                            ("/PUNCTUATION_CHARACTERS" . punctuation-characters)
-                            ("/VALID_IDENTIFIER_CHARACTERS" . valid-identifier-characters)
-                            ("/INDENT_SIZE" . indent-size)
-                            ("/VERSION" . version))
-  "Mapping of attribute keywords to tokens")
+(defvar else-attribute-mapping
+  '(("/LANGUAGE" . language)
+    ("/NOAUTO_SUBSTITUTE" . noauto-substitute)
+    ("/AUTO_SUBSTITUTE" . auto-substitute)
+    ("/SUBSTITUTE_COUNT" . substitution-count)
+    ("/DESCRIPTION" . description)
+    ("/DUPLICATION" . duplication)
+    ("/SEPARATOR" . separator)
+    ("/TYPE" . type)
+    ("CONTEXT_DEPENDENT" . context-dependent)
+    ("VERTICAL" . vertical)
+    ("HORIZONTAL" . horizontal)
+    ("NONTERMINAL" . nonterminal)
+    ("TERMINAL" . terminal)
+    ("MENU" . menu)
+    ("/PLACEHOLDER" . placeholder)
+    ("/TOKEN" . token)
+    ("/FOLLOW" . follow)
+    ("/NOFOLLOW" . nofollow)
+    ("/INITIAL_STRING" . initial-string)
+    ("/PUNCTUATION_CHARACTERS" . punctuation-characters)
+    ("/VALID_IDENTIFIER_CHARACTERS" . valid-identifier-characters)
+    ("/INDENT_SIZE" . indent-size)
+    ("/VERSION" . version))
+  "Mapping of attribute keywords to tokens.")
 
 (defun extract-command-token ()
-  "Called by 'get-token to extract the command information from the match data."
+  "Extract the command information from the match data."
   (let ((command (match-string-no-properties else-defining-command))
         (type (match-string-no-properties else-defining-type))
         (name (match-string-no-properties else-defining-name))
@@ -107,25 +110,25 @@
     this-token))
 
 (defun else-extract-attribute ()
-  "Called by 'get-token to extract the attribute information from the match data."
+  "Extract the attribute information from the match data."
   (let ((attribute (or (match-string-no-properties else-attribute-with-value)
                        (match-string-no-properties else-attribute-no-value)))
         (value (match-string-no-properties else-attribute-value))
         (this-token nil))
-    (setq this-token (make-token :type (cdr (assoc attribute attribute-mapping))
+    (setq this-token (make-token :type (cdr (assoc attribute else-attribute-mapping))
                                  :value value))
     (unless (token-type this-token)
       (signal 'else-compile-error (list (format "Unrecognised attribute %s" attribute) (current-buffer))))
 
     (when (or (eq (token-type this-token) 'duplication)
               (eq (token-type this-token) 'type))
-      (setf (token-value this-token) (cdr (assoc value attribute-mapping)))
+      (setf (token-value this-token) (cdr (assoc value else-attribute-mapping)))
       (unless (token-value this-token)
         (signal 'else-compile-error (list (format "Unrecognised attribute value %s" value) (current-buffer)))))
     this-token))
 
 (defun else-strip-quotes (arg)
-  "Strip any quotes from 'arg and return it."
+  "Strip any quotes from 'ARG and return it."
   (if (and (stringp arg)
            (string= (substring arg 0 1) "\""))
       (substring arg 1 (1- (length arg)))
@@ -202,7 +205,7 @@
                    (while (re-search-forward else-trailing-attribute (line-end-position) t)
                      (when (token-p this-token)
                        (setq this-token (list this-token)))
-                     (setq next-token (make-token :type (cdr (assoc (match-string-no-properties 0) attribute-mapping))))
+                     (setq next-token (make-token :type (cdr (assoc (match-string-no-properties 0) else-attribute-mapping))))
                      (unless (token-type next-token)
                        (setq msg (format "Unrecognised trailing attribute %s" (match-string-no-properties 0)))
                        (signal 'else-compile-error (list msg (oref obj :buffer))))
@@ -228,3 +231,5 @@
     this-token))
 
 (provide 'else-lexer)
+
+;;; else-lexer.el ends here

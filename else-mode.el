@@ -3,9 +3,10 @@
 ;; Copyright (C) 1997 - 2017 Peter Milliken
 ;;
 ;; Author: Peter Milliken <peter.milliken@gmail.com>
-;; Version: 2.00RC1
-;; Package Requires: ((popup "0.5.3"))
+;; Version: 2.0.0
+;; Package Requires: ((popup "0.5.3") (emacs "25.1"))
 ;; Keywords: language sensitive abbreviation template placeholder
+;; URL: https://github.com/peter-milliken/ELSE
 ;;
 ;; GNU Emacs is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -21,12 +22,22 @@
 ;; along with GNU Emacs; see the file COPYING.  If not, write to the
 ;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ;; Boston, MA 02111-1307, USA.
-
+;;
+;;; Commentary:
+;; This package provides a minor mode to generate text (usually language
+;; specific but is certainly not limited to languages) templates.  It uses
+;; persistent markers that allow easy navigation that are transparently deleted
+;; when the user inserts information at the marker.  It maintains separate
+;; template libraries for each major mode in which it is activated.  To activate,
+;; just type M-x else-mode.
+;;
 (require 'popup)
 (require 'cl)
 (require 'eieio)
 (require 'else-structs)
 (require 'else-template)
+
+;;; Code:
 
 (define-error 'else-loading-error "Loading template error")
 (define-error 'else-compile-error "Compile error")
@@ -41,6 +52,7 @@
     map))
 
 (defvar else-mode-key-map
+  "ELSE mode keymap."
   (let ((mode-map (make-sparse-keymap))
         (prefix-map (make-sparse-keymap))
         (command-map (make-sparse-keymap)))
@@ -57,11 +69,12 @@
 ;; following syntax table makes them part of the 'word' constituent so that
 ;; 'words' can be easily extracted for completion purposes
 (defvar else-expand-table (copy-syntax-table (standard-syntax-table))
-  "Used by else-expand-abbreviation to locate possible candidates")
+  "‘else-expand-abbreviation’ uses this table to locate possible candidates.")
 (modify-syntax-entry ?- "w" else-expand-table)
 (modify-syntax-entry ?_ "w" else-expand-table)
 
 (cl-defstruct p-struct
+  "Structure to hold placeholder text instance information."
   (name "")                             ; placeholder name (string)
   (definition nil)                      ; placeholder definition
   (start 0)                             ; start of placeholder text
@@ -71,26 +84,28 @@
   (mandatory nil))                      ; is placeholder mandatory?
 
 (cl-defstruct auto-sub-pair
+  "Pair of markers to define the start/end of an auto-substitution area."
   (start (make-marker))
   (end (make-marker)))
 
 (cl-defstruct auto-sub
+  "Define how many substitutions are active, the original substitution region
+and a list of active substitution regions."
   (active-count 0)
   (origin-markers nil)                  ; pair defining the origin text
   (list-of-markers nil))                ; list of subtitute pairs
 
 (defvar else-Auto-Sub-Markers (make-auto-sub)
-  "Used in the Auto-Substitution process")
+  "Used in the Auto-Substitution process.")
 
 (defvar else-Current-Language nil
-  "Holds the Language definition (instance of else-language) for the current buffer.")
+  "Holds the Language definition (instance of class ‘else-language’) for the current buffer.")
 
 (make-variable-buffer-local 'else-Auto-Sub-Markers)
 (make-variable-buffer-local 'else-Current-Language)
 
 (defmacro else-preserve-hook-excursion (&rest body)
-  "Disable and restore the change-hook functions providing a
-protected form for code evaluation."
+  "Disable and restore the change-hook functions providing a protected form for BODY."
   (declare (debug (&rest form)))
   `(let ()
      (remove-hook 'before-change-functions 'else-before-change t)
@@ -103,7 +118,7 @@ protected form for code evaluation."
      (add-hook 'after-change-functions  'else-after-change  nil t)))
 
 (defmacro else-run-when-active (&rest body)
-  "Provide a wrapper for commands that check if else-mode is enabled."
+  "Provide a wrapper for BODY that check if ‘else-mode’ is enabled."
   (declare (debug (&rest form)))
   `(if (not else-mode)
        (error "ELSE mode not enabled")
@@ -111,7 +126,7 @@ protected form for code evaluation."
        ,@body)))
 
 (defun else-activate-mode ()
-  "Activate ELSE mode"
+  "Activate ELSE mode."
   (let ()
     ;; catch any errors during the activation process and display an error
     ;; message to the user.
@@ -145,8 +160,7 @@ protected form for code evaluation."
           (message (nth 1 err))))))))
 
 (defun else-after-change (begin end length)
-  "After a change has occured in the buffer, if the change happened to an
-auto-substitute placeholder then repeat the change into the auto-substitution area(s)."
+  "Repeat any auto-substitutions (if required)."
   (let ((origin (auto-sub-origin-markers else-Auto-Sub-Markers))
         (auto-sub-list (auto-sub-list-of-markers else-Auto-Sub-Markers))
         (this-pair nil))
@@ -167,9 +181,7 @@ auto-substitute placeholder then repeat the change into the auto-substitution ar
                                               (auto-sub-pair-end origin)))))))))))))
 
 (defun else-before-change (begin end)
-  "If the command will change the buffer contents and point is
-   within a (valid) placeholder then delete the placeholder before continuing
-  with the change."
+  "Before any change, delete any enclosing placeholder."
   (let ((this-pos)
         (dup-direction nil)
         (action-struct)
@@ -208,7 +220,7 @@ auto-substitute placeholder then repeat the change into the auto-substitution ar
           (setf (auto-sub-active-count else-Auto-Sub-Markers) 0))))))
 
 (defun else-create-potential-completion-list ()
-  "Create a list of all placeholder names in the language set that are NONTERMINAL"
+  "List of all placeholder names in the language set that are NONTERMINAL."
   (let ((names nil)
         (names-to-remove nil))
     (setq names (get-names else-Current-Language))
@@ -226,7 +238,8 @@ auto-substitute placeholder then repeat the change into the auto-substitution ar
   (remove-hook 'after-change-functions 'else-after-change t))
 
 (defun else-delete-placeholder ()
-  "Delete the placeholder at `point'. Clean up syntactically."
+  "Delete the placeholder at `point'.
+Clean up syntactically."
   (let ((separator nil)
         (separator-region-end nil)
         (had-left-space nil)
@@ -315,7 +328,7 @@ auto-substitute placeholder then repeat the change into the auto-substitution ar
          (delete-char -1))))))
 
 (defun else-delete-placeholder-text-and-duplicate (entity-details)
-  "Delete the placeholder text from the buffer and duplicate it (if necessary)."
+  "Delete the placeholder and duplicate if necessary."
   (let ((this-pos nil)
         (dup-direction nil))
     (if (p-struct-please-duplicate entity-details)
@@ -345,8 +358,8 @@ auto-substitute placeholder then repeat the change into the auto-substitution ar
                                            entity-details)))))
 
 (defun else-display-menu (possible-matches &optional momentary-only)
-  "Display a list of choices to the user. 'possible-matches is a list of
-   menu-item's"
+  "Display a list of choices to the user.
+'possible-matches is a list of menu-item's."
   (let ((menu-list nil)
         (selection nil)
         (index 0)
@@ -365,8 +378,7 @@ auto-substitute placeholder then repeat the change into the auto-substitution ar
     selection))
 
 (defun else-expand ()
-  "Top level expansion function - used to expand placeholders and
-   abbreviations (of placeholders)."
+  "Expand the placeholder or any preceeding abbreviation at point."
   (interactive)
   (let ((dup-direction nil)
         (deleted-column nil)
@@ -385,9 +397,7 @@ auto-substitute placeholder then repeat the change into the auto-substitution ar
          (goto-char pos-after-insert))))))
 
 (defun else-expand-abbreviation ()
-  "Called when point is at the end of an abbreviation to attempt
-  an expansion by using a list of placeholders defined for the language -
-  TERMINAL placeholders are not candidates."
+  "Expand the abbreviated text at point."
   (let ((entity-details nil)
         (all-placeholder-names nil)
         (abbreviated-string nil)
@@ -422,7 +432,8 @@ auto-substitute placeholder then repeat the change into the auto-substitution ar
     entity-details))
 
 (defun else-extract-abbreviation-at-point ()
-  "Extract the abbreviated text at point using the else syntax table."
+  "Extract the abbreviated text at point.
+Uses else syntax table."
   (let ((completion-ignore-case t)
         (initial-string nil)
         (here (point)))
@@ -433,9 +444,9 @@ auto-substitute placeholder then repeat the change into the auto-substitution ar
     initial-string))
 
 (defun else-in-placeholder ()
-  "Check if point is situated within a (valid) placeholder. Point
-  may be several levels of placeholder deep i.e. [as {name}] -
-  the desired placeholder is 'as {name}', no matter where point
+  "Test if point is situated within a (valid) placeholder returning details.
+Point may be several levels of placeholder deep i.e. [as {name}]
+  - the desired placeholder is 'as {name}', no matter where point
   is within the brackets."
   (let ((origin (point))
         (end-line-limit (line-end-position))
@@ -486,8 +497,7 @@ auto-substitute placeholder then repeat the change into the auto-substitution ar
     placeholder-details))
 
 (defun else-initialise-auto-subst-markers (entity-details)
-  "Initialise the auto-sub of else-Auto-Sub-Marker according to the
-  information conveyed by 'entity-details"
+  "Init 'else-Auto-Sub-Marker' using contents of 'entity-details."
   (let ((auto-sub-search-string nil)
         (sub-counter 0)
         (case-fold-search t)
@@ -521,7 +531,7 @@ auto-substitute placeholder then repeat the change into the auto-substitution ar
     (> sub-counter 0)))
 
 (defun else-kill (&optional force)
-  "Kill the current placeholder."
+  "Kill the placeholder at point."
   (interactive "P")
   (let ((here (point))
         (err-msg nil)
@@ -531,7 +541,7 @@ auto-substitute placeholder then repeat the change into the auto-substitution ar
      (when entity-details
        (when (and (p-struct-mandatory entity-details)
                   (not force))
-         (error "Can't delete, mandatory entry required. Precede command with ^u to force deletion"))
+         (error "Can't delete, mandatory entry required.  Precede command with ^u to force deletion"))
        (else-delete-placeholder)
        ;; Check to see whether we should auto-position to the next
        ;; placeholder or not.
@@ -544,10 +554,12 @@ auto-substitute placeholder then repeat the change into the auto-substitution ar
                       (pos-visible-in-window-p))
            (goto-char here)))))))
 
+;;;###autoload
 (define-minor-mode else-mode
   "Toggle ELSE on/off.
-With a prefix argument ARG, enable ELSE mode if ARG is positive, and disable it
-otherwise. If called from Lisp, enable the mode if ARG is omitted or nil."
+
+Key bindings:
+\\{else-mode-key-map}"
   :lighter " ELSE"
   :init-value nil
   :keymap else-mode-key-map
@@ -631,6 +643,7 @@ otherwise. If called from Lisp, enable the mode if ARG is omitted or nil."
     last-valid))
 
 (defun else-replicate-placeholder-string (duplication-type indent-column entity-details)
+  "Duplicate the placeholder."
   (let ((separator nil)
         (cur-column indent-column))
     (setq separator (oref (p-struct-definition entity-details) :separator))
@@ -642,14 +655,13 @@ otherwise. If called from Lisp, enable the mode if ARG is omitted or nil."
     (insert (concat "[" (p-struct-name entity-details) "]..."))))
 
 (defun else-setup-change-hooks ()
-  "Add the before and after change functions to the before and after
-change hooks."
+  "Setup the before and after change hooks."
   (add-hook 'before-change-functions 'else-before-change t t)
   (add-hook 'after-change-functions 'else-after-change nil t))
 
 (defun else-show-placeholder-names ()
-  "Display names of all of the Placeholders in the current language template
-set, sort them alphabetically and display them in a temporary buffer."
+  "Display info on all Placeholders in the current language template set.
+Sort them alphabetically and display in a temporary buffer."
   (interactive)
   (let ((placeholder-length 0)
         (filename-length 0)
@@ -697,12 +709,12 @@ set, sort them alphabetically and display them in a temporary buffer."
   :group 'tools)
 
 (defcustom else-kill-proceed-to-next-placeholder t
-  "Should else-kill goto next placeholder after a kill(t) or not(nil)"
+  "Should ‘else-kill’ goto next placeholder after a kill(t) or not(nil)."
   :type 'boolean
   :group 'ELSE)
 
 (defcustom else-only-proceed-within-window t
-  "Move after a kill only if the next placeholder is visible in the current window.
+  "Move on kill only if the next placeholder is visible in the current window.
 This flag controls jumps when they are part of a composite action by ELSE
 i.e. in kill-placeholder, if the kill-proceed flags is set then this flag
 allows the move to the next placeholder only if it is visible in the current
@@ -710,7 +722,7 @@ window."
   :type 'boolean
   :group 'ELSE)
 
-(defcustom else-fast-load-directory "~/.emacs.d/else"
+(defcustom else-fast-load-directory user-emacs-directory
   "Directory where fast load files (.esl) are stored."
   :type 'string
   :group 'ELSE)
@@ -721,3 +733,5 @@ window."
   :group 'ELSE)
 
 (provide 'else-mode)
+
+;;; else-mode.el ends here

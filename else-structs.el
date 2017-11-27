@@ -24,11 +24,11 @@
 ;;; Commentary:
 ;;
 ;; This file contains the definitions of the data structures and classes used to
-;; generate the placeholder functionality of ELSE. This is an attempt to
+;; generate the placeholder functionality of ELSE.  This is an attempt to
 ;; separate the data structures from the template language syntax/parsing (refer
 ;; to else-template.el) - because individuals in the past have suggested that
 ;; the structure of the actual template files could perhaps be generated in some
-;; other form i.e. some form more Lisp-like. By making this split, I hope to
+;; other form i.e. some form more Lisp-like.  By making this split, I hope to
 ;; make it easier for anybody who is interested in creating their own template
 ;; file syntax - all they need to do is convert whatever syntax they would
 ;; prefer into the data structures/classes defined below to make their template
@@ -38,6 +38,7 @@
 (require 'eieio)
 (require 'else-lexer)
 
+;;; Code:
 
 (defcustom else-overwrite-placeholder-on-conflict nil
   "If non-nil, replace the placeholder with the new version.
@@ -139,8 +140,7 @@ When nil, throw an error."
          (kill-buffer))))))
 
 (defconst else-Placeholder-Vector-Size 9973
-  "Size of the obarray that contains the placeholder definitions for
-  each language")
+  "Size of each placeholder obarray.")
 
 (defclass else-language ()
   ((name :initarg :name
@@ -198,8 +198,8 @@ When nil, throw an error."
     definition))
 
 (cl-defmethod get-names ((obj else-language))
-  "Get the names of all the placeholder held by the language instance. Sort
-   them alphabetically."
+  "Get the names of all the placeholder held by the language instance.
+Sort them alphabetically."
   (let ((case-fold-search nil)
         (list-of-names nil))
     (when (oref obj :dirty)
@@ -212,8 +212,8 @@ When nil, throw an error."
     (oref obj :placeholder-names)))
 
 (cl-defmethod is-language-dirty ((obj else-language))
-  "Has the language definition changed recently? i.e. since the last time the
-language was tagged as non-dirty."
+  "Has the language definition changed recently?
+i.e. since the last time the language was tagged as non-dirty."
   (oref obj :dirty))
 
 (cl-defmethod set-dirty ((obj else-language) value)
@@ -238,7 +238,7 @@ language was tagged as non-dirty."
               :initform nil)
    (definition-line-number :initarg :definition-line-number
      :initform nil))
-  "Placeholder Class base"
+  "Placeholder Class base."
   :abstract "inheritance only")
 
 (defclass else-placeholder-base (else-base)
@@ -250,13 +250,13 @@ language was tagged as non-dirty."
                 :initform 'vertical)
    (separator   :initarg :separator
                 :initform ""))
-  "Base class for placeholders"
+  "Base class for placeholders."
   :abstract "Base for self-insert, menu or terminal placeholders")
 
 (defclass else-terminal-placeholder (else-placeholder-base)
   ((prompt :initarg :prompt
            :initform nil))
-  "Terminal placeholder i.e. provides a prompt only to the user on expansion")
+  "Terminal placeholder.")
 
 (defclass else-non-terminal-placeholder (else-placeholder-base)
   ()
@@ -265,14 +265,15 @@ language was tagged as non-dirty."
 (defclass else-menu-placeholder (else-placeholder-base)
   ((menu :initarg :menu
          :initform '()))
-  "Menu Placeholder")
+  "Menu Placeholder.")
 
 (cl-defgeneric expand (obj insert-column)
   ())
 
 (cl-defmethod build-menu ((obj else-menu-placeholder))
-  "Build a menu list (assoc list of form (menu-item . menu-entry) by following
-   (or not) all of the menu entries to their ultimate expansion."
+  "Build a menu list.
+(assoc list of form (menu-item . menu-entry) by following (or
+not) all of the menu entries to their ultimate expansion."
   (let ((definition nil)
         (menu-list nil)
         (this-list nil)
@@ -292,7 +293,7 @@ language was tagged as non-dirty."
     menu-list))
 
 (cl-defmethod expand ((obj else-menu-placeholder) insert-column)
-   "'Expand' a MENU type placeholder"
+   "Expand a MENU type placeholder."
   (let ((insert-position (point))
         (menu-list '())
         (selection nil)
@@ -309,13 +310,13 @@ language was tagged as non-dirty."
       (goto-char insert-position))))
 
 (cl-defmethod expand ((obj else-terminal-placeholder) insert-column)
-  "'Expand' a TERMINAL type placeholder"
+  "Expand a TERMINAL type placeholder"
   (let ((prompt-string nil))
     (else-display-menu (dolist (line (oref obj :prompt) prompt-string)
                          (setq prompt-string (concat prompt-string line "\n"))) t)))
 
 (cl-defmethod expand ((obj else-base) insert-column)
-  "'Expand' the self-insert text of a placeholder"
+  "Expand the self-insert text of a placeholder."
   (let ((tab-size (oref else-Current-Language :tab-size))
         (first-line t)
         (line nil)
@@ -344,20 +345,21 @@ language was tagged as non-dirty."
   (oset obj :insert-text (append (oref obj :insert-text) (list (make-insert-line :indent 0 :text text)))))
 
 (cl-defmethod add-line ((obj else-terminal-placeholder) text)
-  "Add a descriptive line of text to the definition"
+  "Add a descriptive line of text to the definition."
   (oset obj :prompt (append (oref obj :prompt) (list text))))
 
 (cl-defmethod add-line ((obj else-menu-placeholder) text type follow description)
-  "Add a menu selection to the definition"
+  "Add a menu selection to the definition."
   (oset obj :menu (append (oref obj :menu) (list (make-menu-entry :text text
                                                                   :type type
                                                                   :follow follow
                                                                   :description description)))))
 
 (cl-defmethod normalise-indentation ((obj else-base) tab-size)
-  "Iterate over the lines of text that define the body and 'normalise' the
-  indentation (spacing) of each line relative to each other and against the
-  tab-size for the language."
+  "Normalise indentation for the template.
+Iterate over the lines of text that define the body and
+'normalise' the indentation (spacing) of each line relative to
+each other and against the tab-size for the language."
   (let ((smallest-indent 100)
         (this-indent 0)
         (this-entry nil)
@@ -388,8 +390,8 @@ language was tagged as non-dirty."
                nil))))))
 
 (defvar else-Language-Repository (make-instance 'else-repository)
-  "Instance of a else-repository - contains all of the template languages for
-  this edit session.")
+  "Instance of a ‘else-repository’.
+Contains all of the template languages for this edit session.")
 
 (defun else-compile-buffer (&optional start-at-point-min)
   "Compile the language template definitions from 'point' to the end."
@@ -452,7 +454,7 @@ language was tagged as non-dirty."
               (setq else-Current-Language (access-language else-Language-Repository name)))))))))
 
 (defun else-define-language (the-lexer)
-  "Parse a language definition"
+  "Parse a language definition."
   (let ((this-language (make-instance 'else-language))
         (this-token (get-token the-lexer))
         (type nil)
@@ -489,7 +491,7 @@ language was tagged as non-dirty."
         (oset temp :tab-size (oref this-language :tab-size))))))
 
 (defun else-define-placeholder (the-lexer )
-  "Parse a placeholder definition and build the instance type"
+  "Parse a placeholder definition."
   (let ((this-token (get-token the-lexer))
         (this-placeholder nil)
         (this-language nil)
@@ -593,7 +595,7 @@ language was tagged as non-dirty."
     (oref this-placeholder :language-name)))
 
 (defun else-extract-placeholder ()
-  "Extract the definition of an placeholder into the buffer at point."
+  "Place the definition of an placeholder into the buffer at point."
   (interactive)
   (let ((selected-definition nil)
         (name nil))
@@ -603,8 +605,9 @@ language was tagged as non-dirty."
        (dump (lookup else-Current-Language name t) (oref else-Current-Language :tab-size))))))
 
 (cl-defun else-extract-all (&optional language)
-  "Request the language name from the user and extract the entire language
-template set into the current buffer"
+  "Extract the full language definition at point.
+Request the language name from the user and extract the entire
+language template set into the current buffer"
   (interactive)
   (let ((name language)
         (else-Language-Specifics nil))
@@ -614,3 +617,5 @@ template set into the current buffer"
       (dump (access-language else-Language-Repository name)))))
 
 (provide 'else-structs)
+
+;;; else-structs.el ends here

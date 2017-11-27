@@ -24,7 +24,7 @@
 ;;; Commentary:
 
 ;; This file (attempts to) separate the functions that deal with the syntax of
-;; language template files from the rest of the ELSE functionality. The idea is
+;; language template files from the rest of the ELSE functionality.  The idea is
 ;; that if the user so chooses, they can substitute their own syntax for
 ;; language template files i.e. more 'Lisp-like' syntax? and replace these
 ;; functions with functions that can process that syntax into the data
@@ -33,11 +33,13 @@
 
 (require 'else-structs)
 
+;;; Code:
+
 (defconst else-lse-ext "\.lse")
 (defconst else-esl-ext "\.esl")
 
 (defun else-dump-definition-header (definition)
-  "Dump (insert) the DELETE/DEFINE PLACEHOLDER statements"
+  "Print the DELETE/DEFINE PLACEHOLDER statements."
   (let ((name (oref definition :name))
         (formatted-string nil)
         (indent-column 4)
@@ -61,7 +63,7 @@
   ())
 
 (cl-defmethod dump ((obj else-placeholder-base))
-  "Dump the 'base' portion of a placeholder"
+  "Print the 'base' portion of a placeholder"
   (let ((insert-position (point))
         (indent-column 4)
         (formatted-string nil))
@@ -92,7 +94,7 @@
       (newline))))
 
 (cl-defmethod dump ((obj else-non-terminal-placeholder) tab-size)
-  "Dump the details of a non-terminal placeholder"
+  "Print the details of a non-terminal placeholder"
   (let ((indent-column 4)
         (text nil))
     (message "non-terminal")
@@ -119,7 +121,7 @@
     (else-dump-end-define)))
 
 (cl-defmethod dump ((obj else-menu-placeholder) tab-size)
-  "Dump the details of a menu placeholder"
+  "Print the details of a menu placeholder"
   (let ((indent-column 4))
     (else-dump-definition-header obj)
     (cl-call-next-method obj)
@@ -144,7 +146,7 @@
     (else-dump-end-define)))
 
 (cl-defmethod dump ((obj else-terminal-placeholder) tab-size)
-  "Dump the details of a terminal placeholder"
+  "Print the details of a terminal placeholder"
   (let ((indent-column 4))
     (else-dump-definition-header obj)
     (cl-call-next-method obj)
@@ -159,7 +161,7 @@
     (else-dump-end-define)))
 
 (cl-defmethod dump ((obj else-language))
-  "Dump a complete language"
+  "Print a complete language definition into the current buffer."
   (let ((index nil)
         (p-chars nil)
         (indent-column 4))
@@ -195,15 +197,16 @@
       (dump (symbol-plist (intern-soft name (oref obj :placeholders))) (oref obj :tab-size)))))
 
 (defun else-dump-end-define ()
-  "Dump the END DEFINE trailor into the buffer at point"
+  "Print the END DEFINE statement."
   (newline)
   (insert "END DEFINE")
   (newline)
   (newline))
 
 (defun else-derive-language-name-from-mode-name ()
-  "Derive the language name using the major mode name and check if the name
-needs processing through the translation table."
+  "Derive the language name.
+Use the major mode name and check if the name needs processing
+through the translation table."
   (let ((language-name mode-name))
     ;; Check to see if there is a translation or alternative naming
     ;; for the mode name i.e. in Emacs 22.1, the mode name for files
@@ -217,11 +220,12 @@ needs processing through the translation table."
     language-name))
 
 (defun else-load-file-and-compile (language-name language-files)
-  "From the language files in 'language-files, either load the .lse/-cust.lse
-  files or the .esl file (whichever is newer).  If the .esl file is either out
-  of date or missing, create a new file in the same directory as the -cust.lse
-  file or (if the -cust.lse file is missing) in the same directory as the .lse
-  file."
+  "Load the language templates.
+From the language files in 'language-files, either load the
+.lse/-cust.lse files or the .esl file (whichever is newer).  If
+the .esl file is either out of date or missing, create a new file
+in the same directory as the -cust.lse file or (if the -cust.lse
+file is missing) in the same directory as the .lse file."
   (let ((template-file-already-loaded nil)
         (primary-language-file nil)
         (custom-language-file nil)
@@ -267,7 +271,7 @@ needs processing through the translation table."
         (dump-language-to-file else-Language-Repository language-name fast-load-file)))))
 
 (defun else-load-language ()
-  "Load the template language for the current buffer"
+  "Load the template language for the current buffer."
   (let ((found-template-name nil)
         (language-file-names nil)
         (language-name))
@@ -303,10 +307,11 @@ needs processing through the translation table."
   (else-language-p else-Current-Language))
 
 (defun else-locate-language-file (name)
-  "Search the load/fast-load-path looking for a language
-definition file, a custom(ised) language file and any fast-load
-language file.  Return the results as a list (or nil if no files
-are found)"
+  "Locate possible language file candidates.
+Search the load/fast-load-path looking for a language definition
+file, a custom(ised) language file and any fast-load language
+file.  Return the results as a list (or nil if no files are
+found)"
   (let ((files '())
         (candidates nil)
         (located-file nil))
@@ -320,7 +325,7 @@ are found)"
     files))
 
 (defun else-scan-menu-body (the-lexer placeholder)
-  "Scan the 'body' of a (placeholder) menu definition and put it into the definition"
+  "Scan the body of a menu placeholder."
   (let ((this-token (get-token the-lexer))
         (text nil)
         (type nil)
@@ -362,7 +367,7 @@ are found)"
     placeholder))
 
 (defun else-scan-non-terminal-body (the-lexer element tab-size)
-  "Scan the body of a non-terminal placeholder and put it into the definition"
+  "Scan the body of a non-terminal placeholder."
   (let ((this-token (get-token the-lexer))
         (this-line nil))
     (catch 'scan-loop
@@ -383,7 +388,7 @@ are found)"
     element))
 
 (defun else-scan-terminal-body (the-lexer placeholder)
-  "Scan the 'body' of a terminal placeholder and put it into the definition"
+  "Scan the body of a terminal placeholder."
   (let ((this-token (get-token the-lexer)))
     (catch 'scan-loop
       (setq this-token (get-token the-lexer))
@@ -401,7 +406,7 @@ are found)"
     placeholder))
 
 (defun else-search-path-for-file (file-spec)
-  "Search path for file 'name', returns path plus name."
+  "Search load path for 'file-spec."
   (let ((search-path (car file-spec))
         (this-attempt nil))
     (catch 'found-file
@@ -410,3 +415,5 @@ are found)"
             (throw 'found-file (expand-file-name (concat this-attempt "/" (cadr file-spec)))))))))
 
 (provide 'else-template)
+
+;;; else-template.el ends here

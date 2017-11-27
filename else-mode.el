@@ -52,7 +52,6 @@
     map))
 
 (defvar else-mode-key-map
-  "ELSE mode keymap."
   (let ((mode-map (make-sparse-keymap))
         (prefix-map (make-sparse-keymap))
         (command-map (make-sparse-keymap)))

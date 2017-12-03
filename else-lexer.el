@@ -228,7 +228,7 @@
         (setf (token-value this-token) (substring (token-value this-token) 0 (1- (length (token-value this-token))))))
       (setf (token-value this-token) (else-strip-quotes (token-value this-token)))
       (setf (token-line-no this-token) (1- (line-number-at-pos))))
-    this-toxken))
+    this-token))
 
 (provide 'else-lexer)
 

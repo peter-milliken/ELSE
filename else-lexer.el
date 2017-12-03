@@ -87,7 +87,7 @@
     ("/VERSION" . version))
   "Mapping of attribute keywords to tokens.")
 
-(defun extract-command-token ()
+(defun else-extract-command-token ()
   "Extract the command information from the match data."
   (let ((command (match-string-no-properties else-defining-command))
         (type (match-string-no-properties else-defining-type))
@@ -171,18 +171,18 @@
         (next-token nil)
         (temp-token nil)
         (msg nil))
-    (if (oref obj :token-valid)
+    (if (slot-value obj 'token-valid)
         (progn
-          (setq this-token (copy-token (oref obj :token)))
+          (setq this-token (copy-token (slot-value obj 'token)))
           (oset obj :token-valid nil))
       (save-match-data
-        (set-buffer (oref obj :buffer))
+        (set-buffer (slot-value obj 'buffer))
         (catch 'scan-loop
           (while t
             (cond ((re-search-forward else-defining-string (line-end-position) t)
-                   (setq this-token (extract-command-token))
+                   (setq this-token (else-extract-command-token))
                    (when (stringp this-token)
-                     (signal 'else-compile-error (list this-token (oref obj :buffer)))))
+                     (signal 'else-compile-error (list this-token (slot-value obj 'buffer)))))
 
                   ((re-search-forward  else-attribute-string (line-end-position) t)
                    (setq this-token (else-extract-attribute)))
@@ -208,7 +208,7 @@
                      (setq next-token (make-token :type (cdr (assoc (match-string-no-properties 0) else-attribute-mapping))))
                      (unless (token-type next-token)
                        (setq msg (format "Unrecognised trailing attribute %s" (match-string-no-properties 0)))
-                       (signal 'else-compile-error (list msg (oref obj :buffer))))
+                       (signal 'else-compile-error (list msg (slot-value obj 'buffer))))
                      (setq this-token (append this-token (list next-token)))))
 
                   ((= (point) (point-max))
@@ -228,7 +228,7 @@
         (setf (token-value this-token) (substring (token-value this-token) 0 (1- (length (token-value this-token))))))
       (setf (token-value this-token) (else-strip-quotes (token-value this-token)))
       (setf (token-line-no this-token) (1- (line-number-at-pos))))
-    this-token))
+    this-toxken))
 
 (provide 'else-lexer)
 

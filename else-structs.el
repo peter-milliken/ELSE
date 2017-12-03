@@ -34,11 +34,15 @@
 ;; prefer into the data structures/classes defined below to make their template
 ;; definitions compatible with the core functionality of ELSE.
 ;;
-(require 'cl)
+(require 'cl-lib)
 (require 'eieio)
 (require 'else-lexer)
 
 ;;; Code:
+
+;;; A 'local' declaration that stops byte compile warnings of 'reference to free
+;;; variable'
+(defvar else-Current-Language)
 
 (defcustom else-overwrite-placeholder-on-conflict nil
   "If non-nil, replace the placeholder with the new version.
@@ -68,30 +72,30 @@ When nil, throw an error."
 (cl-defmethod get-language-names ((obj else-repository))
   "Read out a list of names of all the language templates held in the repository."
   (let ((the-list nil))
-    (dolist (language (oref obj :languages) the-list)
+    (dolist (language (slot-value obj 'languages) the-list)
       (setq the-list (append (list (car language)) the-list)))))
 
 (cl-defmethod language-list ((obj else-repository))
   "Return a list of languages in the repository."
-  (oref obj :languages))
+  (slot-value obj 'languages))
 
 (cl-defmethod add-language ((obj else-repository) language)
   "Add a language instance to the repository"
   (unless (else-language-p language)
     (error "This is an error"))
-  (when (assoc (oref language :name) (oref obj :languages))
-    (error (format "Language %s already present, delete language first" (oref language :name))))
-  (if (not (oref obj :languages))
-      (oset obj :languages (list (cons (oref language :name) language)))
-    (oset obj :languages (push (cons (oref language :name) language) (oref obj :languages)))))
+  (when (assoc (slot-value language 'name) (slot-value obj 'languages))
+    (error (format "Language %s already present, delete language first" (slot-value language 'name))))
+  (if (not (slot-value obj 'languages))
+      (oset obj :languages (list (cons (slot-value language 'name) language)))
+    (oset obj :languages (push (cons (slot-value language 'name) language) (slot-value obj 'languages)))))
 
 (cl-defmethod delete-language ((obj else-repository) language-name)
   "Delete a language instance from the repository"
-  (oset obj :languages (remove* language-name (oref obj :languages) :test 'equal :key 'car)))
+  (oset obj :languages (cl-remove  language-name (slot-value obj 'languages) :test 'equal :key 'car)))
 
 (cl-defmethod access-language ((obj else-repository) language-name)
   "Access or find a language instance held by the repository"
-  (cdr (assoc-string language-name (oref obj :languages) t)))
+  (cdr (assoc-string language-name (slot-value obj 'languages) t)))
 
 (cl-defmethod dump-language-to-file ((obj else-repository) name to-file)
   (let ((language-to-dump (access-language else-Language-Repository name))
@@ -103,12 +107,12 @@ When nil, throw an error."
       (set-buffer (find-file-noselect to-file))
       (erase-buffer)
       (setq write-marker (point-min-marker))
-      (print (oref language-to-dump :name) write-marker)
-      (print (oref language-to-dump :initial-string) write-marker)
-      (print (oref language-to-dump :punctuation-characters) write-marker)
-      (print (oref language-to-dump :valid-identifier-characters) write-marker)
-      (print (oref language-to-dump :tab-size) write-marker)
-      (print (oref language-to-dump :version) write-marker)
+      (print (slot-value language-to-dump 'name) write-marker)
+      (print (slot-value language-to-dump 'initial-string) write-marker)
+      (print (slot-value language-to-dump 'punctuation-characters) write-marker)
+      (print (slot-value language-to-dump 'valid-identifier-characters) write-marker)
+      (print (slot-value language-to-dump 'tab-size) write-marker)
+      (print (slot-value language-to-dump 'version) write-marker)
 
       (mapatoms (lambda (e)
                   (print (symbol-plist e) write-marker))
@@ -170,31 +174,31 @@ When nil, throw an error."
               (else-non-terminal-placeholder-p element)
               (else-menu-placeholder-p element))
     (signal 'else-compile-error (list "Attempting to add an illegal object to language" (current-buffer))))
-  (when (intern-soft (oref element :name) (oref obj placeholders))
+  (when (intern-soft (slot-value element 'name) (slot-value obj 'placeholders))
 
     (if else-overwrite-placeholder-on-conflict
         (delete-element (access-language else-Language-Repository
-                                         (oref element :language-name))
-                        (oref element :name))
-      (signal 'else-compile-error (list (format "Placeholder %s already defined, delete first" (oref element :name))
+                                         (slot-value element 'language-name))
+                        (slot-value element 'name))
+      (signal 'else-compile-error (list (format "Placeholder %s already defined, delete first" (slot-value element 'name))
                                         (current-buffer)))))
-  (setplist (intern (upcase (oref element :name)) (oref obj :placeholders)) element))
+  (setplist (intern (upcase (slot-value element 'name)) (slot-value obj 'placeholders)) element))
 
 (cl-defmethod delete-element ((obj else-language) name)
   "Delete a placeholder from the language instance."
   (oset obj :dirty t)
-  (unintern (upcase name) (oref obj :placeholders)))
+  (unintern (upcase name) (slot-value obj 'placeholders)))
 
 (cl-defmethod lookup ((obj else-language) name &optional ignore-forward-refs)
   "Lookup or access a placeholder definition in the language instance"
   (let ((definition nil))
-    (setq definition (intern-soft (upcase name) (oref obj :placeholders)))
+    (setq definition (intern-soft (upcase name) (slot-value obj 'placeholders)))
     (when definition
       (setq definition (symbol-plist definition)))
     (when (and definition
                (not ignore-forward-refs)
-               (oref definition :reference))
-      (setq definition (lookup obj (oref definition :reference))))
+               (slot-value definition 'reference))
+      (setq definition (lookup obj (slot-value definition 'reference))))
     definition))
 
 (cl-defmethod get-names ((obj else-language))
@@ -202,19 +206,19 @@ When nil, throw an error."
 Sort them alphabetically."
   (let ((case-fold-search nil)
         (list-of-names nil))
-    (when (oref obj :dirty)
+    (when (slot-value obj 'dirty)
       (mapatoms #'(lambda (element)
-                    (push (oref (symbol-plist element) :name) list-of-names))
-                (oref obj :placeholders))
+                    (push (slot-value (symbol-plist element) 'name) list-of-names))
+                (slot-value obj 'placeholders))
       (oset obj :placeholder-names (sort list-of-names (lambda (left right)
                                                          (string< left right))))
       (set-dirty obj nil))
-    (oref obj :placeholder-names)))
+    (slot-value obj 'placeholder-names)))
 
 (cl-defmethod is-language-dirty ((obj else-language))
   "Has the language definition changed recently?
 i.e. since the last time the language was tagged as non-dirty."
-  (oref obj :dirty))
+  (slot-value obj 'dirty))
 
 (cl-defmethod set-dirty ((obj else-language) value)
   "Set the dirty bit for the language instance."
@@ -277,8 +281,8 @@ not) all of the menu entries to their ultimate expansion."
   (let ((definition nil)
         (menu-list nil)
         (this-list nil)
-        (this-language (access-language else-Language-Repository (oref obj :language-name))))
-    (dolist (item (oref obj :menu))
+        (this-language (access-language else-Language-Repository (slot-value obj 'language-name))))
+    (dolist (item (slot-value obj 'menu))
       (if (and (menu-entry-type item) (eq (menu-entry-follow item) 'follow))
           (progn
             (setq this-list (build-menu (lookup this-language (menu-entry-text item))))
@@ -312,16 +316,16 @@ not) all of the menu entries to their ultimate expansion."
 (cl-defmethod expand ((obj else-terminal-placeholder) insert-column)
   "Expand a TERMINAL type placeholder"
   (let ((prompt-string nil))
-    (else-display-menu (dolist (line (oref obj :prompt) prompt-string)
+    (else-display-menu (dolist (line (slot-value obj 'prompt) prompt-string)
                          (setq prompt-string (concat prompt-string line "\n"))) t)))
 
 (cl-defmethod expand ((obj else-base) insert-column)
   "Expand the self-insert text of a placeholder."
-  (let ((tab-size (oref else-Current-Language :tab-size))
+  (let ((tab-size (slot-value else-Current-Language 'tab-size))
         (first-line t)
         (line nil)
         (this-buffer (current-buffer))
-        (text (oref obj :insert-text)))
+        (text (slot-value obj 'insert-text)))
     (save-match-data
       (dolist (current-line text)
         ;; copy the entity because the following hard space conversion will
@@ -342,18 +346,18 @@ not) all of the menu entries to their ultimate expansion."
 
 (cl-defmethod add-line ((obj else-base) text)
   "Add an 'insert' line of text to the definition."
-  (oset obj :insert-text (append (oref obj :insert-text) (list (make-insert-line :indent 0 :text text)))))
+  (oset obj :insert-text (append (slot-value obj 'insert-text) (list (make-insert-line :indent 0 :text text)))))
 
 (cl-defmethod add-line ((obj else-terminal-placeholder) text)
   "Add a descriptive line of text to the definition."
-  (oset obj :prompt (append (oref obj :prompt) (list text))))
+  (oset obj :prompt (append (slot-value obj 'prompt) (list text))))
 
 (cl-defmethod add-line ((obj else-menu-placeholder) text type follow description)
   "Add a menu selection to the definition."
-  (oset obj :menu (append (oref obj :menu) (list (make-menu-entry :text text
-                                                                  :type type
-                                                                  :follow follow
-                                                                  :description description)))))
+  (oset obj :menu (append (slot-value obj 'menu) (list (make-menu-entry :text text
+                                                                         :type type
+                                                                         :follow follow
+                                                                         :description description)))))
 
 (cl-defmethod normalise-indentation ((obj else-base) tab-size)
   "Normalise indentation for the template.
@@ -365,14 +369,14 @@ each other and against the tab-size for the language."
         (this-entry nil)
         (lines-have-indentation nil))
     ;; scan the list for the smallest indent - 'normalise' to this value
-    (dolist (this-line (oref obj :insert-text))
+    (dolist (this-line (slot-value obj 'insert-text))
       (setq this-indent (string-match "\\S-" (insert-line-text this-line)))
       (when (and this-indent (> this-indent 0) (< this-indent smallest-indent))
         (setq smallest-indent this-indent)
         (setq lines-have-indentation t)))
     ;; calculate (normalised) indentation for each line of text
-    (dotimes (index (length (oref obj :insert-text)))
-      (setq this-entry (nth index (oref obj :insert-text)))
+    (dotimes (index (length (slot-value obj 'insert-text)))
+      (setq this-entry (nth index (slot-value obj 'insert-text)))
       (setq this-indent (string-match "\\S-" (insert-line-text this-entry)))
       (when (and this-indent
                  (> this-indent 0))
@@ -450,7 +454,7 @@ Contains all of the template languages for this edit session.")
           (dolist (this-buffer (buffer-list))
             (set-buffer this-buffer)
             (when (and else-Current-Language
-                       (string= (oref else-Current-Language :name) (upcase name)))
+                       (string= (slot-value else-Current-Language 'name) (upcase name)))
               (setq else-Current-Language (access-language else-Language-Repository name)))))))))
 
 (defun else-define-language (the-lexer)
@@ -470,7 +474,7 @@ Contains all of the template languages for this edit session.")
          (oset this-language :initial-string value))
         ('punctuation-characters
          (dotimes (index (length value))
-           (set-char-table-range (oref this-language :punctuation-characters)
+           (set-char-table-range (slot-value this-language 'punctuation-characters)
                                  (aref value index)
                                  t)))
         ('valid-identifier-characters
@@ -483,12 +487,12 @@ Contains all of the template languages for this edit session.")
     ;; note: it is legal to (re)define a language in order to change the
     ;; attributes - specifically the tab-size, so make an exception if the
     ;; language definition is already present by issuing a warning message
-    (if (not (access-language else-Language-Repository (oref this-language :name)))
+    (if (not (access-language else-Language-Repository (slot-value this-language 'name)))
         (add-language else-Language-Repository this-language)
-      (message (format "Warning: Language %s is already defined, assuming modification of tab size" (oref this-language :name)))
-      (setq temp (access-language else-Language-Repository (oref this-language :name)))
-      (when (> (oref this-language :tab-size) 0)
-        (oset temp :tab-size (oref this-language :tab-size))))))
+      (message (format "Warning: Language %s is already defined, assuming modification of tab size" (slot-value this-language 'name)))
+      (setq temp (access-language else-Language-Repository (slot-value this-language 'name)))
+      (when (> (slot-value this-language 'tab-size) 0)
+        (oset temp :tab-size (slot-value this-language 'tab-size))))))
 
 (defun else-define-placeholder (the-lexer )
   "Parse a placeholder definition."
@@ -555,7 +559,7 @@ Contains all of the template languages for this edit session.")
                                                   :separator separator
                                                   :file-name definition-file
                                                   :definition-line-number definition-line-no))
-            (setq this-placeholder (else-scan-non-terminal-body the-lexer this-placeholder (oref this-language :tab-size))))
+            (setq this-placeholder (else-scan-non-terminal-body the-lexer this-placeholder (slot-value this-language 'tab-size))))
 
            ('terminal
             (setq this-placeholder (make-instance 'else-terminal-placeholder
@@ -592,7 +596,7 @@ Contains all of the template languages for this edit session.")
                                                :definition-line-number definition-line-no))))
       (setq this-token (get-token the-lexer)))
     (add-element this-language this-placeholder)
-    (oref this-placeholder :language-name)))
+    (slot-value this-placeholder 'language-name)))
 
 (defun else-extract-placeholder ()
   "Place the definition of an placeholder into the buffer at point."
@@ -602,7 +606,7 @@ Contains all of the template languages for this edit session.")
     (else-run-when-active
      (setq name (upcase (completing-read "Name: " (get-names else-Current-Language))))
      (when name
-       (dump (lookup else-Current-Language name t) (oref else-Current-Language :tab-size))))))
+       (dump (lookup else-Current-Language name t) (slot-value else-Current-Language 'tab-size))))))
 
 (cl-defun else-extract-all (&optional language)
   "Extract the full language definition at point.

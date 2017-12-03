@@ -22,6 +22,11 @@
 ;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ;; Boston, MA 02111-1307, USA.
 
+;;; A 'local' declaration that stops byte compile warnings of 'reference to free
+;;; variable'
+;;; (defvar else-Alternate-Mode-Names)
+(require 'else-mode)
+
 (defvar else-template-mode-syntax-table
   (let ((table (make-syntax-table)))
     ;; String delimiter

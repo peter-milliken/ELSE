@@ -32,7 +32,7 @@
 ;; just type M-x else-mode.
 ;;
 (require 'popup)
-(require 'cl)
+(require 'cl-lib)
 (require 'eieio)
 (require 'else-structs)
 (require 'else-template)
@@ -146,7 +146,7 @@ and a list of active substitution regions."
             (when (= (buffer-size) 0)
               ;; put a space at the end of the initial-string, this helps
               ;; else-next with boundary conditions
-              (insert (oref else-Current-Language :initial-string))
+              (insert (slot-value else-Current-Language 'initial-string))
               (goto-char (point-min))
               (else-next))))
       ((else-loading-error else-compile-error)
@@ -265,7 +265,7 @@ Clean up syntactically."
 
      ;; If the placeholder specified a "separator" then locate and delete the
      ;; separator
-     (setq separator (oref (p-struct-definition entity-details) :separator))
+     (setq separator (slot-value (p-struct-definition entity-details) 'separator))
      (when (> (length separator) 0)
        (setq separator-region-end (point))
        ;; Set a limit as the beginning of the previous line, this is a
@@ -321,7 +321,7 @@ Clean up syntactically."
      ;; Finally, if it is a "punctuation" character of the language then
      ;; make sure there is no preceding space. But if it's not at the start
      ;; of a line
-     (when (aref (oref else-Current-Language :punctuation-characters)
+     (when (aref (slot-value else-Current-Language 'punctuation-characters)
                  (following-char))
        (while (char-equal (preceding-char) ?\ )
          (delete-char -1))))))
@@ -343,8 +343,8 @@ Clean up syntactically."
         ;; Work out the duplication requirements only if the
         ;; placeholder definition is context_dependent i.e. it is
         ;; not being overridden explicitly in the definition.
-        (setq dup-direction (oref (p-struct-definition entity-details)
-                                  :duplication))
+        (setq dup-direction (slot-value (p-struct-definition entity-details)
+                                        'duplication))
 
         (when (eq dup-direction 'context-dependent)
           (if (not (re-search-backward "[^ \t]" (line-beginning-position) t))
@@ -421,7 +421,7 @@ Clean up syntactically."
           (setq matched-placeholder (car expansion-candidates))
         (dolist (name expansion-candidates)
           (setq menu-list (append menu-list (list (make-menu-item :text name
-                                                                  :summary (oref (lookup else-Current-Language name t) :description))))))
+                                                                  :summary (slot-value (lookup else-Current-Language name t) 'description))))))
         (setq selected-index (else-display-menu menu-list))
         (setq matched-placeholder (menu-item-text (nth selected-index menu-list))))
       (when matched-placeholder
@@ -496,16 +496,16 @@ Point may be several levels of placeholder deep i.e. [as {name}]
     placeholder-details))
 
 (defun else-initialise-auto-subst-markers (entity-details)
-  "Init 'else-Auto-Sub-Marker' using contents of 'entity-details."
+  "Init 'else-Auto-Sub-Marker' using contents of 'ENTITY-DETAILS."
   (let ((auto-sub-search-string nil)
         (sub-counter 0)
         (case-fold-search t)
         (this-pair nil)
         (dummy-pair nil)
         (search-limit (point-max)))
-    (when (eq (oref (p-struct-definition entity-details) :substitution) 'auto-substitute)
+    (when (eq (slot-value (p-struct-definition entity-details) 'substitution) 'auto-substitute)
       (save-excursion
-        (setq sub-counter (oref (p-struct-definition entity-details) :substitution-count))
+        (setq sub-counter (slot-value (p-struct-definition entity-details) 'substitution-count))
         (setf (auto-sub-active-count else-Auto-Sub-Markers) sub-counter)
         (setq auto-sub-search-string (concat "[[{]" (p-struct-name entity-details) "[]}]"))
         ;; first paired entry is the origin set
@@ -645,7 +645,7 @@ Key bindings:
   "Duplicate the placeholder."
   (let ((separator nil)
         (cur-column indent-column))
-    (setq separator (oref (p-struct-definition entity-details) :separator))
+    (setq separator (slot-value (p-struct-definition entity-details) 'separator))
     (when (> (length separator) 0)
       (insert separator))
     (when (eq duplication-type 'vertical)
@@ -677,15 +677,15 @@ Sort them alphabetically and display in a temporary buffer."
        (dolist (item-name (get-names else-Current-Language))
          (setq placeholder-length (max (length item-name) placeholder-length))
          (setq item (lookup else-Current-Language item-name t))
-         (setq filename-length (max (length (oref item :file-name)) filename-length))
-         (setq line-number-length (max (length (format "%s" (oref item :definition-line-number))) line-number-length)))
+         (setq filename-length (max (length (slot-value item 'file-name)) filename-length))
+         (setq line-number-length (max (length (format "%s" (slot-value item 'definition-line-number))) line-number-length)))
 
        ;; Now insert them into the buffer at point? Attempt some nice
        ;; formatting at the same time
        (princ (format (concat "%" (number-to-string placeholder-length)
                               "s %s ******")
                       "****** Placeholders for"
-                      (oref else-Current-Language :name)))
+                      (slot-value else-Current-Language 'name)))
        (terpri)
        (terpri)
        (princ (concat "Placeholder Name" (make-string (+ 2 (- placeholder-length (length "Placeholder Name"))) ? )))
@@ -696,9 +696,9 @@ Sort them alphabetically and display in a temporary buffer."
        (dolist (item-name (get-names else-Current-Language))
          (setq item (lookup else-Current-Language item-name t))
          (princ (concat item-name (make-string (+ 2 (- placeholder-length (length item-name))) ? )))
-         (princ (concat (format "%s" (oref item :definition-line-number)) (make-string (+ 2 (- line-number-length (length (format "%s" (oref item :definition-line-number))))) ? )))
-         (princ (concat (oref item :file-name) (make-string (+ 2 (- filename-length (length (oref item :file-name)))) ? )))
-         (princ (format "%s" (oref item :description)))
+         (princ (concat (format "%s" (slot-value item 'definition-line-number)) (make-string (+ 2 (- line-number-length (length (format "%s" (slot-value item 'definition-line-number))))) ? )))
+         (princ (concat (slot-value item 'file-name) (make-string (+ 2 (- filename-length (length (slot-value item 'file-name)))) ? )))
+         (princ (format "%s" (slot-value item 'description)))
          (terpri))))))
 
 (defgroup ELSE nil

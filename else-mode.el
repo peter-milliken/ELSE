@@ -281,7 +281,7 @@ Clean up syntactically."
          ;; may have been run on the buffer as part of a hook command, even
          ;; further spaces may have been added (somehow). Extract the separator
          ;; text and creae a regex that includes 1 or more trailing spaces
-         (setq separator (car (split-string separator ?\ )))
+         (setq separator (car (split-string separator " ")))
          (setq separator (concat separator " +"))
          (setq anchor (point))
          ;; Now try the search.

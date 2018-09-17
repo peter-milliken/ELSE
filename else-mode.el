@@ -383,17 +383,23 @@ Clean up syntactically."
         (deleted-column nil)
         (insert-position nil)
         (entity-details nil)
-        (pos-after-insert nil))
+        (pos-after-insert nil)
+        (else-runtime-error-msg nil))
     (else-run-when-active
-     (setq entity-details (or (else-in-placeholder)
-                              (else-expand-abbreviation)))
-     (when entity-details
-       (setq insert-position (1- (p-struct-start entity-details)))
-       (expand (p-struct-definition entity-details) (p-struct-column-start-position entity-details))
-       (setq pos-after-insert (point))
-       (goto-char insert-position)
-       (unless (else-next 1 :leave-window nil)
-         (goto-char pos-after-insert))))))
+     (setq else-runtime-error-msg
+           (catch 'else-runtime-error
+             (setq entity-details (or (else-in-placeholder)
+                                      (else-expand-abbreviation)))
+             (when entity-details
+               (setq insert-position (1- (p-struct-start entity-details)))
+               (expand (p-struct-definition entity-details) (p-struct-column-start-position entity-details))
+               (setq pos-after-insert (point))
+               (goto-char insert-position)
+               (unless (else-next 1 :leave-window nil)
+                 (goto-char pos-after-insert)))
+             nil))
+     (when else-runtime-error-msg
+       (message else-runtime-error-msg)))))
 
 (defun else-expand-abbreviation ()
   "Expand the abbreviated text at point."

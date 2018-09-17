@@ -362,22 +362,23 @@ DEFINE PLACEHOLDER "MENU BODY QUALIFIER"
     /SEPARATOR=""
     /TYPE=MENU
     
-    "/PLACEHOLDER[nofollow]"
-    "/DESCRIPTION="{text}""
+    "/PLACEHOLDER[follow|nofollow][description]"
+    "DESCRIPTION"/PLACEHOLDER/FOLLOW
 
 END DEFINE
 
-DELETE PLACEHOLDER NOFOLLOW
+DELETE PLACEHOLDER FOLLOW|NOFOLLOW
     /LANGUAGE="Template"
-DEFINE PLACEHOLDER NOFOLLOW
+DEFINE PLACEHOLDER FOLLOW|NOFOLLOW
     /LANGUAGE="Template"
     /NOAUTO_SUBSTITUTE
-    /DESCRIPTION=""
+    /DESCRIPTION="note: NOFOLLOW is the default if no specified."
     /DUPLICATION=CONTEXT_DEPENDENT
     /SEPARATOR=""
-    /TYPE=NONTERMINAL
+    /TYPE=MENU
 
-    "/NOFOLLOW"
+    "/NOFOLLOW"/DESCRIPTION="This is the default"
+    "/FOLLOW"
 
 END DEFINE
 
@@ -391,7 +392,7 @@ DEFINE PLACEHOLDER "MENU PLACEHOLDER BODY LINE"
     /SEPARATOR=""
     /TYPE=NONTERMINAL
     
-    ""{menu body item}"[menu body qualifier]..."
+    ""{menu body item}"[menu body qualifier]"
 
 END DEFINE
 
@@ -449,7 +450,7 @@ DEFINE PLACEHOLDER PLACEHOLDER_TYPE
     
     "nonterminal|terminal_placeholder"/PLACEHOLDER
     "menu_placeholder"/PLACEHOLDER
-    "cross_ref_placeholder"/PLACEHOLDER/NOFOLLOW
+    "cross_ref_placeholder"/PLACEHOLDER
 
 END DEFINE
 
@@ -558,5 +559,19 @@ DEFINE PLACEHOLDER VALID_IDENTIFIER_CHARACTERS
     
     "default_valid_identifier"/PLACEHOLDER
     "user_valid_identifier"/PLACEHOLDER
+
+END DEFINE
+
+DELETE PLACEHOLDER DESCRIPTION
+    /LANGUAGE="Template"
+DEFINE PLACEHOLDER DESCRIPTION
+    /LANGUAGE="Template"
+    /NOAUTO_SUBSTITUTE
+    /DESCRIPTION=""
+    /DUPLICATION=CONTEXT_DEPENDENT
+    /SEPARATOR=""
+    /TYPE=NONTERMINAL
+    
+    "/DESCRIPTION="{text}""
 
 END DEFINE

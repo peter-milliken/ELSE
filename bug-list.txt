@@ -1,0 +1,22 @@
+This file is an attempt to annotate bugs/changes made to ELSE.
+
+bug-01: Template.lse: had some issues with the definition of
+        placeholder_type and "menu body qualifier". The changes were:
+        1. The definition of 'menu body qualifier' was changed to be a
+        menu 
+        2. The NOFOLLOW placeholder was changed to become a menu
+        selection of FOLLOW|NOFOLLOW.
+        3. The '...' repeater after [menu body qualifier] (in 'menu
+        placeholder body line' definition) was deleted (as redundant)
+        4. A new definition - DESCRIPTION - was added to the template
+        file.
+
+        ELSE: Didn't handle "/follow" menu entries that pointed to
+        nonterminal definitions. This was fixed
+        (else-structs.el). Whilst doing this fix, run time
+        enhancements were added to indicate when the user was
+        attempting a menu 'follow' to a nonterminal that held multiple
+        text lines (doesn't make sense to add more than one line to a
+        menu selection) and to also catch if the definitions were
+        trying to 'follow' to a terminal placeholder. An appropriate
+        error message for each condition was added.

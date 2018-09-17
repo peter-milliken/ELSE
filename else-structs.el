@@ -272,8 +272,8 @@ i.e. since the last time the language was tagged as non-dirty."
 
 (cl-defmethod build-menu ((obj else-menu-placeholder))
   "Build a menu list.
-(assoc list of form (menu-item . menu-entry) by following (or
-not) all of the menu entries to their ultimate expansion."
+  (assoc list of form (menu-item . menu-entry) by following (or
+   not) all of the menu entries to their ultimate expansion."
   (let ((definition nil)
         (menu-list nil)
         (this-list nil)
@@ -291,6 +291,30 @@ not) all of the menu entries to their ultimate expansion."
                                                                       :summary (menu-entry-description item))
                                                       item))))))
     menu-list))
+
+(cl-defmethod build-menu ((obj else-non-terminal-placeholder))
+  "Build a 'menu' entry from a non-terminal definition. By it's
+  very nature, this HAS to be a single line entry, so throw an
+  error message if the definition contains more than one line of
+  text."
+  (let ((the-text (oref obj :insert-text)))
+    (if (> (length the-text) 1)
+        ;; throw an error
+        (throw 'else-runtime-error
+               (concat "ELSE run-time error: there is a menu entry with a '/FOLLOW' pointing to NON-TERMINAL placeholder "
+                       (oref obj :name)
+                       " (the NON-TERMINAL placeholder must have a single line of text only, this has multiple lines)"))
+      (list (cons (make-menu-item :text (insert-line-text (car the-text))
+                                  :summary nil)
+                  (make-menu-entry :text (insert-line-text (car the-text))))))))
+
+(cl-defmethod build-menu ((obj else-terminal-placeholder))
+  "This is a catch-all error point i.e. we should never be asked
+  to make a menu from a terminal placeholder."
+  (throw 'else-runtime-error
+         (concat "ELSE run-time error: there is a menu entry with a '/FOLLOW' pointing to TERMINAL placeholder "
+                 (oref obj :name)
+                 " (you can't make a menu from TERMINAL placeholders)")))
 
 (cl-defmethod expand ((obj else-menu-placeholder) insert-column)
    "Expand a MENU type placeholder."

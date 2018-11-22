@@ -1,5 +1,17 @@
 This file is an attempt to annotate bugs/changes made to ELSE.
 
+bug-02: Emacs 26.1: Changed the way Lisp Objects are written and
+        read. At least object instances of the complexity that ELSE
+        generates. ELSE writes the fast load file without any issues,
+        but is unable to read it back during another edit session - it
+        raises an "invalid-read-syntax" error. A bug report was
+        raised, but there is every indication this is a "known" issue
+        - and has a low priority by the maintainers. To "fix"/work
+        around the issue, in defun else-load-file-and-compile, catch
+        the error using a condition-case and force ELSE to by-pass the
+        fast load file and load from the language files instead, at
+        the same time disabling (re)writing a new fast load file.
+
 bug-01: Template.lse: had some issues with the definition of
         placeholder_type and "menu body qualifier". The changes were:
         1. The definition of 'menu body qualifier' was changed to be a

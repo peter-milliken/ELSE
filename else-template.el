@@ -231,6 +231,7 @@ file is missing) in the same directory as the .lse file."
         (custom-language-file nil)
         (fast-load-file nil)
         (load-from-file t)
+        (disable-write-fast-load nil) ; refer to condition-case below
         (result nil))
     (save-excursion
       (dolist (file-name language-files)
@@ -240,16 +241,25 @@ file is missing) in the same directory as the .lse file."
                  (setq primary-language-file file-name)))
               ((string-suffix-p else-esl-ext file-name)
                (setq fast-load-file file-name))))
-      ;; give precedence to the fast-load file
-      (if fast-load-file
-          (if custom-language-file
-              (when (and (file-newer-than-file-p fast-load-file primary-language-file)
-                         (file-newer-than-file-p fast-load-file custom-language-file))
-                (restore-language-from-file else-Language-Repository fast-load-file)
-                (setq load-from-file nil))
-            (when (file-newer-than-file-p fast-load-file primary-language-file)
-              (restore-language-from-file else-Language-Repository fast-load-file)
-              (setq load-from-file nil))))
+      ;; Emacs 26.1 introduced some changed internals dealing with writing Lisp
+      ;; Objects and the reading of the fast load file fails with an
+      ;; invalid-read-syntax. To get around the problem, intercept the error and
+      ;; force ELSE to read from the language files - and disable (re)writing
+      ;; the fast load file!
+      (condition-case err
+          ;; give precedence to the fast-load file
+          (if fast-load-file
+              (if custom-language-file
+                  (when (and (file-newer-than-file-p fast-load-file primary-language-file)
+                             (file-newer-than-file-p fast-load-file custom-language-file))
+                    (restore-language-from-file else-Language-Repository fast-load-file)
+                    (setq load-from-file nil))
+                (when (file-newer-than-file-p fast-load-file primary-language-file)
+                  (restore-language-from-file else-Language-Repository fast-load-file)
+                  (setq load-from-file nil))))
+        ((invalid-read-syntax)
+         (setq load-from-file t)
+         (setq disable-write-fast-load t)))
       (when load-from-file
         ;; otherwise load the definitions from the (.lse) language files - create
         ;; a (new) .esl file in the else-fast-load-directory
@@ -268,7 +278,8 @@ file is missing) in the same directory as the .lse file."
               ;; Only want to clean up when it succeeded, otherwise the
               ;; user probably wants to see the error line.
               (kill-buffer (get-file-buffer file-name)))))
-        (dump-language-to-file else-Language-Repository language-name fast-load-file)))))
+        (unless disable-write-fast-load
+          (dump-language-to-file else-Language-Repository language-name fast-load-file))))))
 
 (defun else-load-language ()
   "Load the template language for the current buffer."

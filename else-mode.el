@@ -3,7 +3,7 @@
 ;; Copyright (C) 1997 - 2017 Peter Milliken
 ;;
 ;; Author: Peter Milliken <peter.milliken@gmail.com>
-;; Version: 2.0.0
+;; Version: 2.1.0
 ;; Package Requires: ((popup "0.5.3") (emacs "25.1"))
 ;; Keywords: language sensitive abbreviation template placeholder
 ;; URL: https://github.com/peter-milliken/ELSE
@@ -32,7 +32,7 @@
 ;; just type M-x else-mode.
 ;;
 (require 'popup)
-(require 'cl)
+(require 'cl-lib)
 (require 'eieio)
 (require 'else-structs)
 (require 'else-template)
@@ -392,7 +392,11 @@ Clean up syntactically."
                                       (else-expand-abbreviation)))
              (when entity-details
                (setq insert-position (1- (p-struct-start entity-details)))
+               (save-excursion
+                 (execute-before (p-struct-definition entity-details)))
                (expand (p-struct-definition entity-details) (p-struct-column-start-position entity-details))
+               (save-excursion
+                 (execute-after (p-struct-definition entity-details)))
                (setq pos-after-insert (point))
                (goto-char insert-position)
                (unless (else-next 1 :leave-window nil)

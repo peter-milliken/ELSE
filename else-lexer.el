@@ -78,6 +78,8 @@
     ("MENU" . menu)
     ("/PLACEHOLDER" . placeholder)
     ("/TOKEN" . token)
+    ("/BEFORE" . before-action)
+    ("/AFTER" . after-action)
     ("/FOLLOW" . follow)
     ("/NOFOLLOW" . nofollow)
     ("/INITIAL_STRING" . initial-string)

@@ -137,9 +137,10 @@
          (insert "/PLACEHOLDER")
          (cl-case (menu-entry-follow this-line)
            ('follow (insert "/FOLLOW"))
-           ;;; for the moment, since nofollow is the default on creation, don't
-           ;;; print the /NOFOLLOW
-           ('nofollow nil))))
+           ('nofollow (insert "/NOFOLLOW"))
+           ;; If the follow value was not ORGINALLY specified in the language
+           ;; file then leave it blank (defaults to the global value)
+           ('follow-not-specified nil))))
       (when (> (length (menu-entry-description this-line)) 0)
         (insert (format "/DESCRIPTION=\"%s\"" (menu-entry-description this-line)))))
     (newline)
@@ -204,19 +205,11 @@
   (newline))
 
 (defun else-derive-language-name-from-mode-name ()
-  "Derive the language name.
-Use the major mode name and check if the name needs processing
-through the translation table."
-  (let ((language-name mode-name))
-    ;; Check to see if there is a translation or alternative naming
-    ;; for the mode name i.e. in Emacs 22.1, the mode name for files
-    ;; with a .c extension changed from "C" to "C/l" - which meant
-    ;; either the language template file(s) should have their name
-    ;; changed or ELSE be made to accomodate this 'quirk' - the latter
-    ;; was chosen.
-    (when (assoc language-name else-Alternate-Mode-Names)
-      (setq language-name
-            (cdr (assoc language-name else-Alternate-Mode-Names))))
+  "Derive the language name from the major-mode(name)."
+  (let ((language-name (symbol-name major-mode)))
+    ;; All major mode names end with the string "-mode", we are interested in
+    ;; what preceeds that part of the name
+    (setq language-name (substring language-name 0 (- (length language-name) (length "-mode"))))
     language-name))
 
 (defun else-load-file-and-compile (language-name language-files)
@@ -347,7 +340,7 @@ found)"
       (setq this-token (get-token the-lexer))
       (while t
         (setq type nil
-              follow 'nofollow
+              follow 'follow-not-specified
               description nil)
         (when (and (not (listp this-token))
                    (or (eq (token-type this-token) 'end-define)

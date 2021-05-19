@@ -34,7 +34,7 @@
 ;; prefer into the data structures/classes defined below to make their template
 ;; definitions compatible with the core functionality of ELSE.
 ;;
-(require 'cl)
+(require 'cl-lib)
 (require 'eieio)
 (require 'else-lexer)
 
@@ -49,7 +49,7 @@ When nil, throw an error."
 (cl-defstruct menu-entry
   (type nil)                            ; 'placeholder or 'token or nil
   (text "")                             ; self-insert text or menu name
-  (follow 'nofollow)                    ; follow menu entry
+  (follow 'follow-not-specified)        ; follow menu entry
   (description ""))                     ; description from referenced menu
 
 (cl-defstruct menu-item
@@ -87,7 +87,7 @@ When nil, throw an error."
 
 (cl-defmethod delete-language ((obj else-repository) language-name)
   "Delete a language instance from the repository"
-  (oset obj :languages (remove* language-name (oref obj :languages) :test 'equal :key 'car)))
+  (oset obj :languages (cl-remove language-name (oref obj :languages) :test 'equal :key 'car)))
 
 (cl-defmethod access-language ((obj else-repository) language-name)
   "Access or find a language instance held by the repository"
@@ -279,7 +279,10 @@ i.e. since the last time the language was tagged as non-dirty."
         (this-list nil)
         (this-language (access-language else-Language-Repository (oref obj :language-name))))
     (dolist (item (oref obj :menu))
-      (if (and (menu-entry-type item) (eq (menu-entry-follow item) 'follow))
+      (if (and (menu-entry-type item) (eq
+                                       (if (eq (menu-entry-follow item) 'follow-not-specified)
+                                           (if else-menu-linking-default 'follow 'nofollow))
+                                       'follow))
           (progn
             (setq this-list (build-menu (lookup this-language (menu-entry-text item))))
             (if this-list
@@ -293,17 +296,15 @@ i.e. since the last time the language was tagged as non-dirty."
     menu-list))
 
 (cl-defmethod build-menu ((obj else-non-terminal-placeholder))
-  "Build a 'menu' entry from a non-terminal definition. By it's
-  very nature, this HAS to be a single line entry, so throw an
-  error message if the definition contains more than one line of
-  text."
+  "Build a 'menu' entry from a non-terminal definition. If the
+  referenced definition contains more than a single line then
+  signal the caller by returning nil - strictly speaking, the
+  referencing placeholder should have a /NOFOLLOW attribute."
   (let ((the-text (oref obj :insert-text)))
     (if (> (length the-text) 1)
-        ;; throw an error
-        (throw 'else-runtime-error
-               (concat "ELSE run-time error: there is a menu entry with a '/FOLLOW' pointing to NON-TERMINAL placeholder "
-                       (oref obj :name)
-                       " (the NON-TERMINAL placeholder must have a single line of text only, this has multiple lines)"))
+        ;; make a menu using the name of the placeholder and it's descriptive
+        ;; text
+        nil
       (list (cons (make-menu-item :text (insert-line-text (car the-text))
                                   :summary nil)
                   (make-menu-entry :text (insert-line-text (car the-text))))))))

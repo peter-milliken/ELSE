@@ -276,18 +276,22 @@ Clean up syntactically."
 
        (if (looking-back (regexp-quote separator) search-limit t)
            (delete-char (* -1 (length separator)))
-         ;; not found
-         ;; any trailing space may have been removed i.e. (delete-trailing-space)
-         ;; may have been run on the buffer as part of a hook command, even
-         ;; further spaces may have been added (somehow). Extract the separator
-         ;; text and creae a regex that includes 1 or more trailing spaces
-         (setq separator (car (split-string separator " ")))
-         (setq separator (concat separator " +"))
-         (setq anchor (point))
-         ;; Now try the search.
-         (when (re-search-backward separator search-limit t)
-           ;; found
-           (delete-region (point) anchor))))
+         ;; separator strings was not found. Any trailing space may have been
+         ;; removed i.e. (delete-trailing-space) may have been run on the buffer
+         ;; as part of a hook command, even further spaces may have been added
+         ;; (somehow). Extract the separator text and create a regex that
+         ;; includes 1 or more trailing spaces - but ONLY if the preceeding
+         ;; character is a space!
+         (if (and (> (current-column) 0) ; not at the beginning of the line
+                  (char-equal (preceding-char) ?\ ))
+             (progn
+               (setq separator (car (split-string separator " ")))
+               (setq separator (concat separator " +"))
+               (setq anchor (point))
+               ;; Now try the search.
+               (when (re-search-backward separator search-limit t)
+                 ;; found
+                 (delete-region (point) anchor))))))
 
      (setq position (point))
 

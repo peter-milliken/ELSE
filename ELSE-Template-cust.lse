@@ -1,0 +1,33 @@
+;; These are customization Templates for the TEMPLATE language
+;; for use with the Emacs Language Sensitive Editor (ELSE).
+;;
+;; Copyright (C) 1997-2017 Peter Milliken
+;;
+;; Author: Peter Milliken <peter.milliken@gmail.com>,
+;;
+;;******************************************************************************
+;; These definitions are my personal customisations for the language. This is
+;; where you should place YOUR customisations.
+;;
+;; The following "customisation" is an example of how to alter the template set
+;; itself so that the {language_name} placeholder can be easily generated. Just
+;; replace the name in the definition below for the language template set you
+;; are developing i.e. Emacs-Lisp, Ada, Python etc etc
+;;
+;;****************************************************************************** 
+
+DELETE PLACEHOLDER LANGUAGE_NAME
+    /LANGUAGE="Template"
+DEFINE PLACEHOLDER LANGUAGE_NAME
+    /LANGUAGE="Template"
+    /AUTO_SUBSTITUTE
+    /SUBSTITUTE_COUNT=1
+    /DESCRIPTION=""
+    /DUPLICATION=CONTEXT_DEPENDENT
+    /SEPARATOR=""
+    /TYPE=NONTERMINAL
+
+    "Emacs-Lisp"
+
+END DEFINE
+

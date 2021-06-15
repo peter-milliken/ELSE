@@ -22,6 +22,12 @@
 ;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ;; Boston, MA 02111-1307, USA.
 
+;; ChangeLog:
+;; 1.1 - Modified to fall into line with using the "major mode" name to
+;;       determine the ELSE template file name(s).  ELSE Template file name(s)
+;;       changed at the same time to match this change. Now turning on else-mode
+;;       in a .lse file, Emacs/ELSE will load the ELSE-Template lse file(s).
+
 (defvar else-template-mode-syntax-table
   (let ((table (make-syntax-table)))
     ;; String delimiter
@@ -95,12 +101,6 @@ are available:
   (setq-local comment-use-syntax t)
 
   ;; Font locking
-  (setq font-lock-defaults '(else-template-font-lock-keywords))
-
-  (unless (assoc "ELSE-Template" else-Alternate-Mode-Names)
-    (add-to-list 'else-Alternate-Mode-Names '("ELSE-Template" . "Template")))
-
-  (when (fboundp 'else-mode)
-    (else-mode 1)))
+  (setq font-lock-defaults '(else-template-font-lock-keywords)))
 
 (provide 'else-template-mode)

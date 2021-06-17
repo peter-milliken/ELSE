@@ -379,8 +379,14 @@ Clean up syntactically."
                                :value index :summary summary) menu-list)
         (setq index (1+ index)))
       (setq menu-list (reverse menu-list))
-      (setq selection (funcall (intern-soft else-alternate-menu-picker) menu-list)))
+      (setq selection (else-disp-menu-pick menu-list)))
     selection))
+
+(defun else-disp-menu-pick (menu)
+  "Display the list (menu) of possible choices and return the
+   selected item. This defun provides a single point where the
+   alternate-menu-picker variable can be accessed."
+  (funcall (intern-soft else-alternate-menu-picker) menu))
 
 (defun else-expand ()
   "Expand the placeholder or any preceeding abbreviation at point."
@@ -564,6 +570,41 @@ Point may be several levels of placeholder deep i.e. [as {name}]
          (unless (and else-only-proceed-within-window
                       (pos-visible-in-window-p))
            (goto-char here)))))))
+
+(defun else-load-template (&optional language-template-name)
+  "Load a template file into the Template library."
+  (interactive "P")
+  (let ((language-name language-template-name)
+        (language-file-names nil))
+    ;; if a file name has not been passed in then prompt the user for a name
+    (if (not language-name)
+        (setq language-name (read-string "Language name: ")))
+    ;; if the language is not already loaded then load and compile it
+    (if (not (access-language else-Language-Repository language-name))
+        (progn
+          (setq language-file-names (else-locate-language-file language-name))
+          (if (> (length language-file-names) 0)
+              (else-load-file-and-compile language-name language-file-names)
+            ;; otherwise, raise an error, unable to locate template files
+            (message "Unable to locate file names associated with requested language")))
+      ;; otherwise, message that the language is already loaded
+      (message (format "Language %s is already loaded" language-name)))))
+
+(defun else-switch-templates (&optional template-name)
+  "Switch templates being used by local buffer.  New template is
+  either specified by 'template-name or provided by user selction
+  from a list of currently loaded template."
+  (interactive "P")
+  (let ((language-name template-name)
+        (languages-loaded (get-language-names else-Language-Repository)))
+    ;; It doesn't make any sense to run this command unless ELSE is active for
+    ;; the current buffer.
+    (else-run-when-active
+     (if (not language-name)
+         (progn
+           (setq language-name (else-disp-menu-pick languages-loaded))
+           (if language-name
+               (setq else-Current-Language (access-language else-Language-Repository language-name))))))))
 
 ;;;###autoload
 (define-minor-mode else-mode

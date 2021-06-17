@@ -91,7 +91,17 @@
       (newline)
       (indent-to indent-column)
       (insert (format "/SEPARATOR=\"%s\"" (oref obj :separator)))
-      (newline))))
+      (newline)
+      (if (oref obj :before-action)
+          (progn
+            (indent-to-column indent-column)
+            (insert (format "/BEFORE=%s" (oref obj :before-action)))
+            (newline)))
+      (if (oref obj :after-action)
+          (progn
+            (indent-to-column indent-column)
+            (insert (format "/AFTER=%s" (oref obj :after-action)))
+            (newline))))))
 
 (cl-defmethod dump ((obj else-non-terminal-placeholder) tab-size)
   "Print the details of a non-terminal placeholder"

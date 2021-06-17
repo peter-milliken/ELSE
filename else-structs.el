@@ -230,8 +230,10 @@ i.e. since the last time the language was tagged as non-dirty."
                 :initform "")
    (reference :initarg :reference
               :initform nil)
-   (action :initarg :action
-           :initform '())
+   (before-action :initarg :before-action ; perform this action prior to expansion
+                  :initform '())
+   (after-action :initarg :after-action ;perform this action after expansion
+                 :initform '())
    (insert-text :initarg :insert-text
                 :initform '())
    (file-name :initarg :file-name
@@ -266,9 +268,6 @@ i.e. since the last time the language was tagged as non-dirty."
   ((menu :initarg :menu
          :initform '()))
   "Menu Placeholder.")
-
-(cl-defgeneric expand (obj insert-column)
-  ())
 
 (cl-defmethod build-menu ((obj else-menu-placeholder))
   "Build a menu list.
@@ -316,6 +315,28 @@ i.e. since the last time the language was tagged as non-dirty."
          (concat "ELSE run-time error: there is a menu entry with a '/FOLLOW' pointing to TERMINAL placeholder "
                  (oref obj :name)
                  " (you can't make a menu from TERMINAL placeholders)")))
+
+(cl-defmethod execute-before ((obj else-base))
+  "If the placeholder has a /BEFORE action specified then execute it"
+  (condition-case err
+      (if (oref obj :before-action)
+          (funcall (intern-soft (oref obj :before-action))))
+    (void-function
+     (message "Symbol's function definition is void: %s"
+              (oref obj :before-action)))
+    (error
+     (message "%s" (error-message-string err)))))
+
+(cl-defmethod execute-after ((obj else-base))
+  "If the placeholder has a /AFTER action specified then execute it"
+  (condition-case err
+      (if (oref obj :after-action)
+          (funcall (intern-soft (oref obj :after-action))))
+    (void-function
+     (message "Symbol's function definition is void: %s"
+              (oref obj :after-action)))
+    (error
+     (message "%s" (error-message-string err)))))
 
 (cl-defmethod expand ((obj else-menu-placeholder) insert-column)
    "Expand a MENU type placeholder."
@@ -527,6 +548,8 @@ Contains all of the template languages for this edit session.")
         (description "")
         (duplication 'context-dependent)
         (separator "")
+        (before-act nil)
+        (after-act nil)
         (placeholder-reference nil)
         (type nil)
         (value nil)
@@ -566,6 +589,12 @@ Contains all of the template languages for this edit session.")
         ('separator
          (setq separator value))
 
+        ('before-action
+         (setq before-act value))
+
+        ('after-action
+         (setq after-act value))
+
         ('type
          (push-back-token the-lexer this-token)
          (cl-case value
@@ -578,6 +607,8 @@ Contains all of the template languages for this edit session.")
                                                   :substitution-count sub-count
                                                   :duplication duplication
                                                   :separator separator
+                                                  :before-action before-act
+                                                  :after-action after-act
                                                   :file-name definition-file
                                                   :definition-line-number definition-line-no))
             (setq this-placeholder (else-scan-non-terminal-body the-lexer this-placeholder (oref this-language :tab-size))))
@@ -591,6 +622,8 @@ Contains all of the template languages for this edit session.")
                                                   :substitution-count sub-count
                                                   :duplication duplication
                                                   :separator separator
+                                                  :before-action before-act
+                                                  :after-action after-act
                                                   :file-name definition-file
                                                   :definition-line-number definition-line-no))
             (setq this-placeholder (else-scan-terminal-body the-lexer this-placeholder)))
@@ -604,6 +637,8 @@ Contains all of the template languages for this edit session.")
                                                   :substitution-count sub-count
                                                   :duplication duplication
                                                   :separator separator
+                                                  :before-action before-act
+                                                  :after-action after-act
                                                   :file-name definition-file
                                                   :definition-line-number definition-line-no))
             (setq this-placeholder (else-scan-menu-body the-lexer this-placeholder)))))

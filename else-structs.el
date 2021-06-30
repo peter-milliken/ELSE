@@ -276,19 +276,27 @@ i.e. since the last time the language was tagged as non-dirty."
   (let ((definition nil)
         (menu-list nil)
         (this-list nil)
-        (this-language (access-language else-Language-Repository (oref obj :language-name))))
+        (this-language (access-language else-Language-Repository (oref obj :language-name)))
+        (this-placeholder-ref nil))
     (dolist (item (oref obj :menu))
       (if (and (menu-entry-type item) (eq
                                        (if (eq (menu-entry-follow item) 'follow-not-specified)
-                                           (if else-menu-linking-default 'follow 'nofollow))
+                                           (if else-menu-linking-default 'follow 'nofollow)
+                                         (menu-entry-follow item))
                                        'follow))
           (progn
-            (setq this-list (build-menu (lookup this-language (menu-entry-text item))))
-            (if this-list
-                (setq menu-list (append menu-list this-list))
-              (setq menu-list (append menu-list (list (cons (make-menu-item :text (menu-entry-text item)
-                                                                            :summary (menu-entry-description item))
-                                                            item))))))
+            ;; Add this step because sometimes a menu item may not exist (if the
+            ;; language hasn't been fully defined or a mistake made).
+            (setq this-placeholder-ref (lookup this-language (menu-entry-text item)))
+            (if (null this-placeholder-ref)
+                (message "A placeholder definition for %s does not exist" (menu-entry-text item))
+              (setq this-list (build-menu this-placeholder-ref))
+              (if this-list
+                  (setq menu-list (append menu-list this-list))
+                (setq menu-list (append menu-list
+                                        (list (cons (make-menu-item :text (menu-entry-text item)
+                                                                    :summary (oref this-placeholder-ref :description))
+                                                    item)))))))
         (setq menu-list (append menu-list (list (cons (make-menu-item :text (menu-entry-text item)
                                                                       :summary (menu-entry-description item))
                                                       item))))))
@@ -347,9 +355,11 @@ i.e. since the last time the language was tagged as non-dirty."
     (setq menu-list (build-menu obj))
     ;; display the keys of the menu-list, return the index'd element (selected)
     ;; and access the menu-entry for expansion.
-    (setq selected-menu-entry (cdr (nth (else-display-menu (cl-loop for entry in menu-list
-                                                                    collect (car entry)))
-                                        menu-list)))
+    (let ((selected-text nil))
+      (setq selected-text (else-display-menu (cl-loop for entry in menu-list collect (car entry))))
+      (dolist (menu-entry menu-list)
+        (if (string= selected-text (menu-item-text (car menu-entry)))
+            (setq selected-menu-entry (cdr menu-entry)))))
     (if (menu-entry-type selected-menu-entry) ; placeholder?
         (expand (lookup else-Current-Language (menu-entry-text selected-menu-entry)) insert-column)
       (insert (menu-entry-text selected-menu-entry))

@@ -361,37 +361,68 @@ Clean up syntactically."
                                            (- this-pos (line-beginning-position))
                                            entity-details)))))
 
-(defun else-default-display-menu (menu)
+(defun else-default-display-menu (placeholders descriptions)
   "This is the 'default' menu selector used by ELSE. It uses the
   popup package. the user can replace this function using
   else-alternate-menu-picker in the customisation variables."
-  (popup-menu* menu :keymap else-menu-mode-map))
+  (let ((index 0)
+        (menu-list nil)
+        (value nil)
+        (smallest-desc-len 25))         ; use a default max length for
+                                        ; descriptions
+    (dotimes (index (length placeholders))
+      (setq value (nth index placeholders))
+      (let ((desc-len (length (nth index descriptions))))
+        (if (> (length (nth index descriptions))
+               smallest-desc-len)
+            (push
+             (popup-make-item value
+                              :summary (substring (nth index descriptions)
+                                                  0
+                                                  smallest-desc-len))
+             menu-list)
+          (push (popup-make-item value
+                                 :summary (nth index descriptions))
+                menu-list))))
+    (setq menu-list (reverse menu-list))
+    (popup-menu* menu-list :keymap else-menu-mode-map)))
 
 (defun else-display-menu (possible-matches &optional momentary-only)
-  "Display a list of choices to the user.
-'possible-matches is a list of menu-item's."
-  (let ((menu-list nil)
-        (selection nil)
+  "Display a list of choices to the user, 'possible-matches is a
+  list of menu-item's. This function creates two lists to be
+  passed to the menu picker function. The first list is the
+  actuall placeholder strings and the second list is the
+  descriptions (if they were defined) for each placeholder. So
+  the called menu picker should iceally display each line
+  as '<placeholder> <description>'."
+  (let ((placeholder-list nil)
+        (descriptions nil)
         (index 0)
         (value nil)
-        (summary nil))
-    (if momentary-only
-        (popup-tip possible-matches)
-      (dolist (item possible-matches)
-        (setq value (menu-item-text item)
-              summary (menu-item-summary item))
-        (push (popup-make-item value
-                               :value index :summary summary) menu-list)
-        (setq index (1+ index)))
-      (setq menu-list (reverse menu-list))
-      (setq selection (else-disp-menu-pick menu-list)))
-    selection))
+        (summary nil)
+        (selection nil))
+     (if momentary-only
+         (popup-tip possible-matches)
+       (dolist (item possible-matches)
+         (push (menu-item-text item) placeholder-list)
+         (push (menu-item-summary item) descriptions))
+       (setq placeholder-list (reverse placeholder-list)
+             descriptions (reverse descriptions))
+       (setq selection (funcall
+                        (intern-soft else-alternate-menu-picker)
+                        placeholder-list descriptions)))
+     selection))
 
-(defun else-disp-menu-pick (menu)
-  "Display the list (menu) of possible choices and return the
-   selected item. This defun provides a single point where the
+(defun else-disp-menu-pick (placeholders descriptions)
+  "Display the list of placeholders with their accompanying
+   descriptions of possible choices and return the selected
+   item. This defun provides a single point where the
    alternate-menu-picker variable can be accessed."
-  (funcall (intern-soft else-alternate-menu-picker) menu))
+  (let ((menu-list '()))
+    (dolist (item menu)
+      (push item menu-list))
+    (setq menu-list (reverse menu-list))
+    (funcall (intern-soft else-alternate-menu-picker) menu)))
 
 (defun else-expand ()
   "Expand the placeholder or any preceeding abbreviation at point."
@@ -449,8 +480,7 @@ Clean up syntactically."
         (dolist (name expansion-candidates)
           (setq menu-list (append menu-list (list (make-menu-item :text name
                                                                   :summary (oref (lookup else-Current-Language name t) :description))))))
-        (setq selected-index (else-display-menu menu-list))
-        (setq matched-placeholder (menu-item-text (nth selected-index menu-list))))
+        (setq matched-placeholder (else-display-menu menu-list)))
       (when matched-placeholder
         (delete-char (* -1 (length abbreviated-string)))
         (insert (concat "[" matched-placeholder "]"))
@@ -605,16 +635,25 @@ Point may be several levels of placeholder deep i.e. [as {name}]
   from a list of currently loaded template."
   (interactive "P")
   (let ((language-name template-name)
-        (languages-loaded (get-language-names else-Language-Repository)))
+        (languages-loaded (get-language-names else-Language-Repository))
+        (menu-display nil)
+        (language-name nil))
     ;; It doesn't make any sense to run this command unless ELSE is active for
     ;; the current buffer.
     (else-run-when-active
      (if (not language-name)
          (progn
-           (setq language-name (else-disp-menu-pick languages-loaded))
+           ;; Re-use the else-display-menu function so that the choice goes
+           ;; through whatever menu/completion function the user has
+           ;; configured. We need to turn the list of languages loaded into a
+           ;; list of 'menu-items for compatability
+           (dolist (language-name languages-loaded)
+             (push (make-menu-item :text language-name :summary nil) menu-display))
+           (setq menu-display (reverse menu-display))
+           (setq language-name (else-display-menu menu-display))
            (if language-name
                (setq else-Current-Language (access-language else-Language-Repository language-name))))))))
-
+state
 ;;;###autoload
 (define-minor-mode else-mode
   "Toggle ELSE on/off.
@@ -796,7 +835,9 @@ override this default option."
   :group 'ELSE)
 
 (defcustom else-alternate-menu-picker "else-default-display-menu"
-  "{documentation}"
+  "Place the name of your desired menu display/completion function here.
+Refer to else-display-menu for an example of processing and what arguments are
+  expected."
   :type 'string
   :group 'ELSE)
 

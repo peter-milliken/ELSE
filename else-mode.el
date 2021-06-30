@@ -653,7 +653,7 @@ Point may be several levels of placeholder deep i.e. [as {name}]
            (setq language-name (else-display-menu menu-display))
            (if language-name
                (setq else-Current-Language (access-language else-Language-Repository language-name))))))))
-state
+
 ;;;###autoload
 (define-minor-mode else-mode
   "Toggle ELSE on/off.

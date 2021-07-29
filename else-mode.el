@@ -368,24 +368,80 @@ Clean up syntactically."
   (let ((index 0)
         (menu-list nil)
         (value nil)
-        (smallest-desc-len 25))         ; use a default max length for
-                                        ; descriptions
-    (dotimes (index (length placeholders))
-      (setq value (nth index placeholders))
-      (let ((desc-len (length (nth index descriptions))))
-        (if (> (length (nth index descriptions))
-               smallest-desc-len)
-            (push
-             (popup-make-item value
-                              :summary (substring (nth index descriptions)
-                                                  0
-                                                  smallest-desc-len))
-             menu-list)
-          (push (popup-make-item value
-                                 :summary (nth index descriptions))
-                menu-list))))
+        (desc-filled '())
+        (place-filled '())
+        (description nil)
+        (longest 0)
+        (selected nil)
+        (menu-height-limit 15)  ; this magic number is used by popup-menu*
+        (desired-menu-height 0)
+        (actual-menu-height 0)
+        (room-above nil)
+        (room-below nil)
+        (cur-row (cdr (posn-col-row (posn-at-point))))) ; row # in window
+
+    (defun equalize-strings (the-list)
+      "Create a new list where each element is left-justified and blank filled
+      so that all the list elements are the same length i.e. the longest"
+      (let ((returned-list '())
+            (length-of-longest 0))
+        ; Find the length of the longest string in the list
+        (setq length-of-longest (cl-loop for el in (mapcar 'length the-list) maximize el))
+
+        ; only continue if the entire list is not nil
+        (if (> length-of-longest 0)
+            ; left-justify and blank fill each menu item
+            (setq returned-list
+                  (mapcar (lambda (x)
+                            (concat x (make-string (- length-of-longest (length x)) ? )))
+                          the-list)))
+        returned-list))
+
+    ;; popup right justifies the DESCRIPTION text, which is annoying, to force
+    ;; it to left justify, make each DESCRIPTION the same length by filling
+    ;; spaces at the end of the short(er) strings
+    (setq desc-filled (equalize-strings descriptions))
+    ; then, to keep the placeholder and descriptive text in neat columns, do the
+    ; same to the placeholder list
+    (setq place-filled (equalize-strings placeholders))
+
+    ; create each menu entry for popup to display
+    (dotimes (index (length place-filled))
+      (setq value (nth index place-filled))
+      (push (popup-make-item value
+                             :summary (nth index desc-filled))
+            menu-list))
+    ; Keep the menu in the same order as the original template definition
     (setq menu-list (reverse menu-list))
-    (popup-menu* menu-list :keymap else-menu-mode-map)))
+
+    ; popup may either display the menu above or below point, it depends on the
+    ; menu length and the current line number in thw window. popup-menu* has a
+    ; default height of 15 (hard-coded). Determine if (a) there is sufficient
+    ; room above/below the current line to display all 15 menu lines - if not
+    ; reduce the height to popup-menu* and (b) if a scroll-bar should be display
+    ; i.e. if the menu length/height is greater than the selected display
+    ; height.
+    (setq actual-menu-height (min menu-height-limit (length menu-list)))
+    (setq room-above (< actual-menu-height cur-row))
+    (setq room-below (< actual-menu-height (- (window-text-height)
+                                              actual-menu-height)))
+    ; if there is not enough room above OR below then adjust the max height to
+    ; fit (either above or below)
+    (if (not (or room-above room-below))
+        (setq actual-menu-height (- (max cur-row (- (window-text-height) cur-row))
+                                    2)))
+    (setq value (popup-menu* menu-list
+                             :scroll-bar (< actual-menu-height (length menu-list))
+                             :height actual-menu-height
+                             :max-width 0.8
+                             :keymap else-menu-mode-map))
+    ; the 'value' returned is the placeholder text that was left-justified and
+    ; filled, so search for the original placeholder and return it to the
+    ; caller.
+    (dolist (placeholder placeholders)
+      (if (string= placeholder (substring value 0 (length placeholder)))
+          (setq selected placeholder)))
+    selected))
 
 (defun else-display-menu (possible-matches &optional momentary-only)
   "Display a list of choices to the user, 'possible-matches is a
@@ -412,17 +468,6 @@ Clean up syntactically."
                         (intern-soft else-alternate-menu-picker)
                         placeholder-list descriptions)))
      selection))
-
-(defun else-disp-menu-pick (placeholders descriptions)
-  "Display the list of placeholders with their accompanying
-   descriptions of possible choices and return the selected
-   item. This defun provides a single point where the
-   alternate-menu-picker variable can be accessed."
-  (let ((menu-list '()))
-    (dolist (item menu)
-      (push item menu-list))
-    (setq menu-list (reverse menu-list))
-    (funcall (intern-soft else-alternate-menu-picker) menu)))
 
 (defun else-expand ()
   "Expand the placeholder or any preceeding abbreviation at point."

@@ -1,7 +1,6 @@
-
 ;;; else-mode.el --- Emacs Language Sensitive Editor (ELSE)
 ;;
-;; Copyright (C) 1997 - 2017 Peter Milliken
+;; Copyright (C) 1997 - 2017, 2021 Peter Milliken
 ;;
 ;; Author: Peter Milliken <peter.milliken@gmail.com>
 ;; Version: 2.1.0
@@ -37,8 +36,9 @@
 (require 'eieio)
 (require 'else-structs)
 (require 'else-template)
+;; include the menu selection commands so the user doesn't have to.
+(require 'else-select-menu-system)
 
-;;; Code:
 
 (define-error 'else-loading-error "Loading template error")
 (define-error 'else-compile-error "Compile error")
@@ -370,11 +370,8 @@ Clean up syntactically."
         (value nil)
         (desc-filled '())
         (place-filled '())
-        (description nil)
-        (longest 0)
         (selected nil)
         (menu-height-limit 15)  ; this magic number is used by popup-menu*
-        (desired-menu-height 0)
         (actual-menu-height 0)
         (room-above nil)
         (room-below nil)
@@ -451,22 +448,19 @@ Clean up syntactically."
   descriptions (if they were defined) for each placeholder. So
   the called menu picker should iceally display each line
   as '<placeholder> <description>'."
-  (let ((placeholder-list nil)
+  (let ((placeholders nil)
         (descriptions nil)
-        (index 0)
-        (value nil)
-        (summary nil)
         (selection nil))
      (if momentary-only
          (popup-tip possible-matches)
        (dolist (item possible-matches)
-         (push (menu-item-text item) placeholder-list)
+         (push (menu-item-text item) placeholders)
          (push (menu-item-summary item) descriptions))
-       (setq placeholder-list (reverse placeholder-list)
+       (setq placeholders (reverse placeholders)
              descriptions (reverse descriptions))
        (setq selection (funcall
                         (intern-soft else-alternate-menu-picker)
-                        placeholder-list descriptions)))
+                        placeholders descriptions)))
      selection))
 
 (defun else-expand ()

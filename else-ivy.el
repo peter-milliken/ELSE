@@ -106,11 +106,6 @@
       (throw 'else-runtime-error "ivy package is not available!")
   ))
 
-(defun else-use-display-menu-ivy ()
-  "Use the ivy menu selector."
-  (interactive)
-  (setq else-alternate-menu-picker "else-ivy-display-menu"))
-
 (setq else-alternate-menu-picker "else-ivy-display-menu")
 
 (provide 'else-ivy)

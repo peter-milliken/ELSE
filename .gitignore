@@ -7,3 +7,5 @@
 *.log
 *.tmp
 *.toc
+*.bak
+*.elc

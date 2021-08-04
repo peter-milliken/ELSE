@@ -1,13 +1,15 @@
 # ELSE
 Emacs Language Sensitive Editor
 
-Emacs 26.1: Version 26.1 of Emacs does not write readable Lisp Objects, so the fast load file does not work as described in the manual. Bug-02 fixes this issue by causing ELSE to catch the error thrown by Emacs on the Lisp Object read failure and re-directs ELSE to compile the templates from the original source files instead. This is all transparent to the user.
-
-ELSE now works with ivy and the Emacs built-in completing-read functions for menu display and selection. The default is (still) to use the popup package, but users can use ivy and completing-read (respectively) by including either of the following lines AFTER the "(require 'else-mode)" statement in their config file:
-ivy: (require 'else-ivy)
-completing-read: (require 'else-completing-read)
+## Latest News
+1. ELSE now works with ivy and the Emacs built-in completing-read functions for menu display and selection. The file else-select-menu-system.el contains functions to switch between the (default) popup package, ivy and the Emacs standard Completing-read. There is an extra function definiton that invokes popup with isearch enabled, unfortunately, enabling this "feature" overrides the keymap in two important areas: "q" (quit) and "s" (select). The later may not be an issue for the user since the ENTER key can still be used to select a menu item, however, it is not uncommon to want to "quit" out of a menu seloection..... else-mode.el itself "requires" the else-select-menu-system package, so the user does not have to add anything to their config file.
 
 If there is some other completion package the use would like to use, they need to write a menu interface function (see else-default-display-menu in else-mode.el or else-display-ivy-menu in else-ivy.el for examples) and there is a custom variable (else-alternate-menu-picker) which can be set to redirect ELSE to the function to use to prepare and display the menu of seletions.
+
+2. ELSE v2 now includes an option that was in originally in v1 but was removed in the conversion to v2 due to lack of interest. The user can now specify a Emacs lisp function to be run /BEFORE and /AFTER a placeholder expansion. Useful examples are difficult to show, but several users (of ELSE v1 and now v2) requested the feature, so I have included it (back) into ELSE. If anybody has a really useful example, please let me know via email and I will consider adding it to the user manual!
+
+## Standard Blurb
+Emacs 26.1: Version 26.1 of Emacs does not write readable Lisp Objects, so the fast load file does not work as described in the manual. Bug-02 fixes this issue by causing ELSE to catch the error thrown by Emacs on the Lisp Object read failure and re-directs ELSE to compile the templates from the original source files instead. This is all transparent to the user.
 
 This is ELSE v2 and works with Emacs 25+. ELSE v1 was developed and used under Emacs 18/19 - 24 but with the advent of Emacs 25 it became 'broken' and was certainly showing its age. This version of ELSE is a complete rewrite and, whilst it is functionally equivalent to v1, it contains significent changes to the template files that were used in v1. The single biggest change is that TOKENs no longer exist i.e. everything is now defined as a PLACEHOLDER and ELSE now treats abbreviated text like it used to treat TOKENs i.e. f, fo and for can now all be 'expanded' to have a for-loop template placed in the buffer at point. Depending on the number of characters being expanded, the user may be presented with a popup menu to accept a possible completion.
 

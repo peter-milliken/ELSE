@@ -1,17 +1,29 @@
 # ELSE
-Emacs Language Sensitive Editor
+Emacs Language Sensitive Editor - modeled after DEC's Language Sensitive Editor (LSE)
+
+## Why ELSE?
+In a nutshell, ELSE is a minor mode that provides language templates, in a similar manner to other template packages, such as Yasnippet. However, ELSE provides a significant advantage over other systems because, rather than use (temporary) invisible markers in the buffer (that disappear at the most inconvenient times!), it uses textual placeholders that "persist" until the user actively deletes the placeholder text i.e. a typical if statement (C language) before the user has "filled in the blanks" could look like this:
+```
+if ({expression})
+{
+    {statement}...
+}
+[elsif_part]...
+[else_part]
+```
+Each piece of text within curly/square brackets are placeholders that will only "disappear" when user types in them or are explicitly deleted (and cleaned up) with the else-kill command. Until the user takes one of those two actions, this the entire template framework will exist in the buffer/file - even across Emacs sessions. This behavior has numerous advantages, not the least, that a placeholder can be inserted and used as a "yeah, I have to come back here and do something later" marker.
 
 ## Latest News
-1. ELSE now works with ivy and the Emacs built-in completing-read functions for menu display and selection. The file else-select-menu-system.el contains functions to switch between the (default) popup package, ivy and the Emacs standard Completing-read. There is an extra function definiton that invokes popup with isearch enabled, unfortunately, enabling this "feature" overrides the keymap in two important areas: "q" (quit) and "s" (select). The later may not be an issue for the user since the ENTER key can still be used to select a menu item, however, it is not uncommon to want to "quit" out of a menu seloection..... else-mode.el itself "requires" the else-select-menu-system package, so the user does not have to add anything to their config file.
+1. ELSE now works with ivy and the Emacs built-in completing-read functions for menu display and selection. The file else-select-menu-system.el contains functions to switch between the (default) popup package, ivy and the Emacs standard Completing-read. There is an extra function definition that invokes popup with isearch enabled, unfortunately, enabling this "feature" overrides the keymap in two important areas: "q" (quit) and "s" (select). The later may not be an issue for the user since the ENTER key can still be used to select a menu item, however, it is not uncommon to want to "quit" out of a menu selection..... else-mode.el itself "requires" the else-select-menu-system package, so the user does not have to add anything to their config file.
 
-If there is some other completion package the use would like to use, they need to write a menu interface function (see else-default-display-menu in else-mode.el or else-display-ivy-menu in else-ivy.el for examples) and there is a custom variable (else-alternate-menu-picker) which can be set to redirect ELSE to the function to use to prepare and display the menu of seletions.
+If there is some other completion package the use would like to use, they need to write a menu interface function (see else-default-display-menu in else-mode.el or else-display-ivy-menu in else-ivy.el for examples) and there is a custom variable (else-alternate-menu-picker) which can be set to redirect ELSE to the function to use to prepare and display the menu of selections.
 
 2. ELSE v2 now includes an option that was in originally in v1 but was removed in the conversion to v2 due to lack of interest. The user can now specify a Emacs lisp function to be run /BEFORE and /AFTER a placeholder expansion. Useful examples are difficult to show, but several users (of ELSE v1 and now v2) requested the feature, so I have included it (back) into ELSE. If anybody has a really useful example, please let me know via email and I will consider adding it to the user manual!
 
 ## Standard Blurb
 Emacs 26.1: Version 26.1 of Emacs does not write readable Lisp Objects, so the fast load file does not work as described in the manual. Bug-02 fixes this issue by causing ELSE to catch the error thrown by Emacs on the Lisp Object read failure and re-directs ELSE to compile the templates from the original source files instead. This is all transparent to the user.
 
-This is ELSE v2 and works with Emacs 25+. ELSE v1 was developed and used under Emacs 18/19 - 24 but with the advent of Emacs 25 it became 'broken' and was certainly showing its age. This version of ELSE is a complete rewrite and, whilst it is functionally equivalent to v1, it contains significent changes to the template files that were used in v1. The single biggest change is that TOKENs no longer exist i.e. everything is now defined as a PLACEHOLDER and ELSE now treats abbreviated text like it used to treat TOKENs i.e. f, fo and for can now all be 'expanded' to have a for-loop template placed in the buffer at point. Depending on the number of characters being expanded, the user may be presented with a popup menu to accept a possible completion.
+This is ELSE v2 and works with Emacs 25+. ELSE v1 was developed and used under Emacs 18/19 - 24 but with the advent of Emacs 25 it became 'broken' and was certainly showing its age. This version of ELSE is a complete rewrite and, whilst it is functionally equivalent to v1, it contains significant changes to the template files that were used in v1. The single biggest change is that TOKENs no longer exist i.e. everything is now defined as a PLACEHOLDER and ELSE now treats abbreviated text like it used to treat TOKENs i.e. f, fo and for can now all be 'expanded' to have a for-loop template placed in the buffer at point. Depending on the number of characters being expanded, the user may be presented with a popup menu to accept a possible completion.
 
 ELSE is a minor mode for Emacs, designed to work with any major mode. The aim is to provide a seamless mechanism to generate language constructs easily and intuitively with a minimum of keystrokes and interference with the user. It's primary application is a minor mode for any programming language (major mode) but it can be used for any editing task that involves generation of repetitive text/blocks of text e.g. there is a template file for Texinfo mode. 
 

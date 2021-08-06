@@ -85,7 +85,7 @@ are available:
   "Compile the whole current buffer."
   (interactive)
   (save-excursion
-    (else-compile-buffer 'start-at-point-min)))
+    (else-internal-compile-buffer 'start-at-point-min)))
 
 ;;;###autoload
 (define-derived-mode else-template-mode prog-mode "ELSE-Template"

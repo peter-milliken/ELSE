@@ -449,9 +449,27 @@ each other and against the tab-size for the language."
   "Instance of a ‘else-repository’.
 Contains all of the template languages for this edit session.")
 
-(defun else-compile-buffer (&optional start-at-point-min)
-  "Compile the language template definitions from 'point' to the end."
+(defun else-compile-buffer (&optional stay-at-point)
+  "A User command to compile the buffer. This optionally allows
+   the user to remain at point (using a prefix to the command) or
+   for the command to leave point at the end of the buffer. In
+   either event, if an error occurs then point is left at or near
+   the error."
   (interactive "P")
+  (let ((current-location (point))
+        (this-error nil))
+    (setq this-error
+          (catch 'internal-error-catch
+            (else-internal-compile-buffer)))
+    (if (not (null this-error))
+        (progn
+          (message (format "Compile aborted - %s" (nth 1 this-error)))
+          (set-buffer (nth 2 this-error)))
+      (if stay-at-point
+          (goto-char current-location)))))
+
+(defun else-internal-compile-buffer (&optional start-at-point-min)
+  "Compile the language template definitions from 'point' to the end."
   (let ((operation nil)
         (err-msg nil)
         (op nil)
@@ -492,13 +510,12 @@ Contains all of the template languages for this edit session.")
                (delete-language else-Language-Repository (else-strip-quotes (token-value this-token)))))))
 
       ((else-compile-error)
-       (if (called-interactively-p 'any)
-           (progn
-             ;; handle the error here
-             (message (format "Compile aborted - %s" (nth 1 err)))
-             (set-buffer (nth 2 err)))
-         ;; otherwise re-throw the error
-         (signal 'else-compile-error (cdr err)))))
+       ;; historical note: the error was originally handled here. But then we
+       ;; wanted to provide the option of point either staying at the position
+       ;; when the compile was requested (by the user using a prefix command) or
+       ;; leaving point at the end of the buffer (signalling a successful
+       ;; compile)
+       (throw 'internal-error-catch err)))
     (when languages-changed
       (delete-dups languages-changed)
       (save-current-buffer

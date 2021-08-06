@@ -274,7 +274,7 @@ file is missing) in the same directory as the .lse file."
           (when file-name
             (setq template-file-already-loaded (get-file-buffer file-name))
             (set-buffer (find-file-noselect file-name))
-            (else-compile-buffer t)
+            (else-internal-compile-buffer t)
             ;; Only delete the buffer if we had to load it explicitly, otherwise leave
             ;; it alone.
             (unless template-file-already-loaded
